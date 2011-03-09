@@ -13,11 +13,14 @@ import java.util.regex.Pattern;
 //Process the file at opening of the file!
 //TODO VERIFY THAT MARKET VALUE COMES BEFORE SHARES
 //TODO VERIFY THAT PRICE DOES NOT COME BEFORE EITHER
+
+//TODO Need to check name cusip for 3M like Stocks
 public class File13F {
 
 	private File f13F;
 	private Fund fund13F;
 	private String matchType;
+	private int numClaimedHoldings;
 	
 	public File13F(String filePath){
 		
@@ -73,7 +76,7 @@ public class File13F {
 		return matchType;
 	}
 	
-	
+	//gets All the holdings and stores them in a Fund object
 	private void initFund() throws IOException{
 
 		//load file into wholeFile
@@ -94,6 +97,7 @@ public class File13F {
         wholeFile = wholeFile.replaceAll( "\"", " ");
         wholeFile = wholeFile.replaceAll( "=", " ");
 
+        setNumClaimedHoldings(wholeFile);
 //		//Berkshire Hathaway case:
 //		//One line is standard
 //		//next lines until the next holding do not have Company or CUSIP
@@ -110,47 +114,75 @@ public class File13F {
 //			end
 		
 		ArrayList<String> bestMatch = getListMatches(wholeFile);
+		if(!matchedHoldingsCloseToClaimed(wholeFile, bestMatch.size())){
+			System.err.println("This file's number of matches doesnt match number of claimed holdings: " + f13F.getPath()
+					+"\nNumber of found: "+ bestMatch.size()+" Number Claimed in File:"+ numClaimedHoldings);
+			System.exit(1);
+		}
 		addHoldingsFromMatches(bestMatch);
 //	    return fund13F.getHoldings().keySet();
 	}
 	
+	public int getTableEntryTotal(String wholeFile){
+		
+		Pattern p = Pattern.compile("TABLE *ENTRY *TOTAL:+ *[0-9,]*");
+		Pattern p1 = Pattern.compile("Table *Entry *Total:+ *[0-9,]*");
+		Pattern p2 = Pattern.compile("table *entry *total:+ *[0-9,]*");
+		Matcher m = p.matcher(wholeFile);
+		Matcher m1 = p1.matcher(wholeFile);
+		Matcher m2 = p2.matcher(wholeFile);
+
+		if(m.find()){
+			StringTokenizer k = new StringTokenizer(m.group().replaceAll(",",""));
+			String tok;
+			while(k.hasMoreTokens()){
+				tok = k.nextToken();
+				if(isStringNumber(tok))
+					return Integer.parseInt(tok);
+			}
+		}else if(m1.find()){
+			StringTokenizer k = new StringTokenizer(m1.group().replaceAll(",",""));
+			String tok;
+			while(k.hasMoreTokens()){
+				tok = k.nextToken();
+				
+				if(isStringNumber(tok))
+					return Integer.parseInt(tok);
+			}
+		}else if(m2.find()){
+			StringTokenizer k = new StringTokenizer(m2.group().replaceAll(",",""));
+			String tok;
+			while(k.hasMoreTokens()){
+				tok = k.nextToken();
+				if(isStringNumber(tok))
+					return Integer.parseInt(tok);
+			}
+		}
+			
+			
+		return 0;
+	}
 	
-	public static boolean isCusipValid(String cusip)
-	{
-	    int d, sum, multiply, i;
+	private void setNumClaimedHoldings(String wholeFile){
+		numClaimedHoldings = getTableEntryTotal(wholeFile);
+	}
+	
+	public boolean matchedHoldingsCloseToClaimed(String wholeFile, int numFound){
+		//return false only if numClaimedHoldings not zero OR 
+		if(numClaimedHoldings == 0)
+			return true;
+		return (numFound-numClaimedHoldings)/(numClaimedHoldings+1) < .25 ; //within twenty-five percent
+	}
+	
 
-	    if (cusip.length() != 9 || !Character.isDigit(cusip.charAt(8)))
-	        return false;
 
-	    for (sum = 0, multiply = 1, i = 7; i > -1; --i) {
-	        if (i < 3) {
-	            if (Character.isDigit(cusip.charAt(i)))
-	                d = cusip.charAt(i) - '0';
-	            else
-	                return false;
-	        } else {
-	            if (Character.isUpperCase(cusip.charAt(i)))
-	                d = cusip.charAt(i) - 'A' + 10;
-	            else if (Character.isDigit(cusip.charAt(i)))
-	                d = cusip.charAt(i) - '0';
-	            else
-	                return false;
-	        }
-
-	        if((i+1)%2 == 0)
-	            d *= 2;
-
-	        sum += (d / 10) + (d % 10); 
-	    }
-
-	    sum %= 10;
-	    sum = 10 - sum;
-	    sum %= 10;
-
-	    if (sum != cusip.charAt(8) - '0')
-	        return false;
-
-	    return true;
+	public boolean isStringNumber(String in) {
+		try {
+			Double.parseDouble(in);
+		} catch (NumberFormatException ex) {
+			return false;
+		}
+		return true;
 	}
 	
 	private void addHoldingsFromMatches(ArrayList<String> bestMatch) {
@@ -158,23 +190,31 @@ public class File13F {
 		String cusipString;
 		String valueTemp;
 		String sharesTemp;
+		int numNotEnoughVals= 0;
+		System.out.println(matchType);
 		
+		String newline;
+				
 		for(String line: bestMatch){
 			
 			if(line.replaceAll(",","").split(" ").length == 1)
-				line = line.replaceAll(",", " ");
+				newline = line.replaceAll(",", " ");
 			else
-				line = line.replaceAll(",","");
+				newline = line.replaceAll(",","");
 			
-		   	tempToken = new StringTokenizer(line);
+		   	tempToken = new StringTokenizer(newline);
 		   	
 		    cusipString = tempToken.nextToken();
 
-		    if (matchType.contains("Eight Digit")) 
-		    	cusipString = cusipString +  getCusipDigit(cusipString);
+		    if (matchType.contains("Eight Digit")) {
+		    	//System.out.println(cusipString);
+		    	if(!hasNumber(cusipString))
+		    		continue;
+		    	cusipString = cusipString +  getCusipCheckDigit(cusipString);
+		    }
 		    
 		    //Case where 5-2-1
-		    if ( cusipString.length() < 9 )
+		    if (matchType.contains("Six Two One"))
 		    	cusipString = cusipString + tempToken.nextToken() + tempToken.nextToken();
 
 		    if(!isCusipValid(cusipString)){
@@ -189,16 +229,28 @@ public class File13F {
 		    else
 		    	valueTemp = "0";
 		    
-		    if(matchType.contains("Name Cusip Switched"))
-			    valueTemp = tempToken.nextToken();
+		    if(matchType.contains("Name Cusip Switched")){
+		    	while(!isStringNumber(valueTemp))
+		    		valueTemp = tempToken.nextToken();
+		    }
 		    
 		    if(matchType.contains("Name Ticker Cusip Switched")){
 		    	valueTemp = tempToken.nextToken();
 		    	valueTemp = tempToken.nextToken();
 		    }
+		    			    
+		    if(tempToken.hasMoreTokens()){
+		    	sharesTemp = tempToken.nextToken();
+		    }else if(bestMatch.indexOf(line)>1 && (1.0*numNotEnoughVals)/(1.0*bestMatch.indexOf(line)) < .5  ){ //Just a Freak incident
+		    	numNotEnoughVals += numNotEnoughVals;
+		    	continue;
+		    }
+		    else{
+		    	//get an ERROR
+		    	System.out.println(matchType+ " " +line+ " "+ cusipString+" value: "+ valueTemp + " " +newline);
+		    	sharesTemp = tempToken.nextToken();
+		    }
 		    	
-//		    System.out.println(matchType+ " " +line+cusipString);
-		    sharesTemp = tempToken.nextToken();
 		    if(matchType.contains("Sole Shares Switched")){ //This means that "Sole" came before the number of shares owned
 		    	sharesTemp = tempToken.nextToken();
 		    }
@@ -216,32 +268,7 @@ public class File13F {
 		    
 //		    System.out.println(sharesTemp +  " " + valueTemp+ " " + line);
 		    fund13F.addHoldings(cusipString, new Holding(new Double(sharesTemp), new Double(valueTemp)));
-	    
-//		    
-//		    %if the file follows a Berkshire Hathaway format and
-//		    %if there is a value of start2 between start(ii) and start(ii+1)
-//		    while type2 && type2_ind<=length(start2) && start2(type2_ind)>start(ii) && (ii==length(start) || start2(type2_ind)<start(ii+1)) 
-//		        %Add the Value and Shares
-//		        temp = str(start2(type2_ind):finish2(type2_ind));
-//		        temp = strrep(temp, '"', '');
-//		        temp = strrep(temp, ',', '');
-//		        temp = strrep(temp, '$', '');
-//		        [t temp] = strtok(temp);
-//		        value_temp = t;
-//		        [t temp] = strtok(temp);
-//		        shares_temp = t;
-//		        %get rid of commas and convert to numbers
-//		        value_temp  = strrep(value_temp ,',', '');
-//		        Value(ii) = Value(ii)+str2double(value_temp );
-//		        shares_temp = strrep(shares_temp,',', '');
-//		        Shares(ii) = Shares(ii)+str2double(shares_temp);
-//		        if isnan(Value(ii)) || isnan(Shares(ii))
-//		            str(start2(type2_ind):finish2(type2_ind))
-//		            file
-//		            erroorrr
-//		        end
-//		        type2_ind = type2_ind+1;    
-//		    end
+		    
 			}
 		
 
@@ -252,16 +279,13 @@ public class File13F {
 					System.err.println(bestMatch.size()+ " " + bestMatch.toString());
 					System.err.println(matchType);
 				}
-					
 				//System.exit(1);
 			}
-			
-			//System.out.println(fund13F.getFundValue());
-			
+			//System.out.println(fund13F.getFundValue());			
 	}
 	
 	
-	public boolean hasNumber(String s){
+	public static boolean hasNumber(String s){
 		for(char c: s.toCharArray()){
 			if(Character.isDigit(c))
 				return true;
@@ -269,8 +293,22 @@ public class File13F {
 		return false;
 	}
 	
+	public static boolean isCusipValid(String cusip)
+	{
+	    if(!hasNumber(cusip))
+	    	return false;
+	    	    
+	    if (cusip.length() != 9 || !Character.isDigit(cusip.charAt(8)))
+	        return false;
+
+	    if (getCusipCheckDigit(cusip.substring(0,8)) != cusip.charAt(8) )
+	        return false;
+
+	    return true;
+	}
+	
 	//Determines the CUSIP check digit, algorithm from Wikipedia
-	public char  getCusipDigit(String cusip){
+	public static char getCusipCheckDigit(String cusip){
 	  int sum = 0, v =0, p, result;
 	  char c;
 	   if(cusip.length() != 8){
@@ -346,66 +384,83 @@ public class File13F {
 			return new ArrayList<String>();
 	}
 	
+	private String notLetter = "[^A-Za-z]";
+	private String notDigit = "[^0-9]";
+	private String lettersAndDigits = "[0-9A-Za-z]";
+	private String letters = "[A-Za-z]";
+	private String nineLettersAndDigits = notLetter+lettersAndDigits + "{9}";
+	private String nineLetters = notLetter + letters+ "{9}";
+	private String eightLettersAndDigits = notDigit+lettersAndDigits + "{8}";
+	private String eightLetters = notDigit+letters+ "{8}";
+	private String manyLetters = letters +"+";
+	private String name = "[A-Za-z ]+";
+	private String space = "[\t\n$=, ]+";
+	private String number = "[0-9,.]+";
+	private String sixTwoOneLettersAndDigits = lettersAndDigits+"{6}" +" "+lettersAndDigits+"{2}"+ " "+ lettersAndDigits+"{1} ";
+	private String sixTwoOneLetters = letters+"{6}" +" "+letters+"{2}"+ " "+ letters+"{1}";
+	
+	private double eightDigitFactor = 1.1; //Want to use eight digit matching only if it is significantly better than 
+	
 	public ArrayList<String> getListMatchesDefault(String wholeFile){
-		 Pattern cusipPattern = Pattern.compile("[^A-Za-z][0-9A-Za-z]{9}[\t\n$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+"); 
-	     Pattern cusipPatternTest = Pattern.compile("[^A-Za-z][A-Za-z]{9}[\t\n$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		 Pattern cusipPattern = Pattern.compile(nineLettersAndDigits+ space+number+space+number); //"[^A-Za-z][0-9A-Za-z]{9}[\t\n$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+"); 
+	     Pattern cusipPatternTest = Pattern.compile(nineLetters+ space+number+space+number);// "[^A-Za-z][A-Za-z]{9}[\t\n$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
 	     return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
 	public ArrayList<String> getListMatchesNoValue(String wholeFile){
-		 Pattern cusipPattern = Pattern.compile("[0-9A-Za-z]{9}[\t\n$=, ]+[0-9,.]+"); 
-	     Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{9}[\t\n$=, ]+[0-9,.]+");
+		 Pattern cusipPattern = Pattern.compile(nineLettersAndDigits+space+number);//"[0-9A-Za-z]{9}[\t\n$=, ]+[0-9,.]+"); 
+	     Pattern cusipPatternTest = Pattern.compile(nineLetters+space+number);//"[A-Za-z]{9}[\t\n$=, ]+[0-9,.]+");
 	     return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
 	
 	public ArrayList<String> getListMatchesSoleShareSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{9}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{9}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(nineLettersAndDigits+ space+number+space+manyLetters+space+number);// "[0-9A-Za-z]{9}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(nineLetters+ space+number+space+manyLetters+space+number);//"[A-Za-z]{9}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+"
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
 	public ArrayList<String> getListMatchesSoleShareSwitchedEight(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(eightLettersAndDigits+space+number+space+manyLetters+space+number);//"[0-9A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(eightLetters+space+number+space+manyLetters+space+number);//"[A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[a-zA-Z]+[\t\n\\$=, ]+[0-9,.]+");
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 
 	public ArrayList<String> getListMatchesSixTwoOne(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{6} [0-9A-Za-z]{2} [0-9A-Za-z]{1}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{6} [A-Za-z]{2} [A-Za-z]{1}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(sixTwoOneLettersAndDigits+ space+number+space+number);
+		Pattern cusipPatternTest = Pattern.compile(sixTwoOneLetters+ space+number+space+number);//[A-Za-z]{6} [A-Za-z]{2} [A-Za-z]{1}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
 	public ArrayList<String> getListMatchesEightDigit(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(eightLettersAndDigits+space+number+space+number);//"[^0-9][0-9A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(eightLetters+space+number+space+number);//"[^0-9][A-Za-z]{8}[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
 	public ArrayList<String> getListMatchesNameCusipSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(nineLettersAndDigits+space+name+space+number+space+number);//"[0-9A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(nineLetters+space+name+space+number+space+number);//"[A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z0]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	
 	}
 	
 	public ArrayList<String> getListMatchesNameCusipSwitchedEight(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(eightLettersAndDigits+space+name+space+number+space+number);//"[^0-9][0-9A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(eightLetters+space+name+space+number+space+number);//"[^0-9][A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	
 	}
 	
 	public ArrayList<String> getListMatchesNameTickerCusipSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(nineLettersAndDigits+space+name+space+name+space+number+space+number);//"[0-9A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(nineLetters+space+name+space+name+space+number+space+number);//"[A-Za-z]{9}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
 	public ArrayList<String> getListMatchesNameTickerCusipSwitchedEight(String wholeFile){
-		Pattern cusipPattern= Pattern.compile("[0-9A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
-		Pattern cusipPatternTest = Pattern.compile("[A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPattern= Pattern.compile(eightLettersAndDigits+space+name+space+name+space+number+space+number);//"[^0-9][0-9A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
+		Pattern cusipPatternTest = Pattern.compile(eightLetters+space+name+space+name+space+number+space+number);//"[^0-9][A-Za-z]{8}[\t\n\\$=, ]+[A-Za-z]+[\t\n\\$=, ]+[A-Za-z0-9]+[\t\n\\$=, ]+[0-9,.]+[\t\n\\$=, ]+[0-9,.]+");
 		return getMatches(wholeFile, cusipPattern, cusipPatternTest);
 	}
 	
@@ -424,7 +479,7 @@ public class File13F {
 		}
 		
 		bestMatchTemp = getListMatchesSoleShareSwitchedEight(wholeFile);
-		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
+		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
 			bestMatch = bestMatchTemp;
 			matchType = "Sole Shares Switched "+ "Eight Digit ";
 		}
@@ -436,7 +491,11 @@ public class File13F {
 		}
 
 		bestMatchTemp = getListMatchesEightDigit(wholeFile);
-		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
+		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
+			System.out.println(bestMatch);
+			System.out.println(bestMatchTemp);
+			System.out.println(bestMatchTemp.size());
+			System.out.println(bestMatch.size());
 			bestMatch = bestMatchTemp;
 			matchType = "Eight Digit ";
 		}
@@ -448,7 +507,7 @@ public class File13F {
 		}
 
 		bestMatchTemp = getListMatchesNameCusipSwitchedEight(wholeFile);
-		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
+		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
 			bestMatch = bestMatchTemp;
 			matchType = "Name Cusip Switched "+ "Eight Digit ";
 		}
@@ -460,7 +519,7 @@ public class File13F {
 		}
 		
 		bestMatchTemp = getListMatchesNameTickerCusipSwitchedEight(wholeFile);
-		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
+		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
 			bestMatch = bestMatchTemp;
 			matchType = "Name Ticker Cusip Switched " + "Eight Digit ";
 		}

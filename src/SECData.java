@@ -23,6 +23,7 @@ public class SECData {
 	public static final String sec13FsFilingDir = "data/";
 	public static final String secRemoteFullDir = "edgar/full-index/";
 	public static final String secRemoteDataDir = "edgar/data/";
+	private static String tempFolder ="temp/";
 	public static String companyIdx = "company.idx";
 	private static String companyIdx13F = "company.idx.13F";
 
@@ -31,7 +32,7 @@ public class SECData {
 	// Private constructor prevents instantiation from other classes
 	private SECData() {
 		createFolders(sec13FsLocalDir);
-
+		createFolders(tempFolder);
 		// TODO Verify that all files that should be downloaded are
 	}
 
@@ -180,20 +181,45 @@ public class SECData {
 
 	public Hashtable<String, Holding> combineTableEntries(
 			Hashtable<String, Holding> table1, Hashtable<String, Holding> table2) {
-		if (table1.isEmpty())
-			return table2;
-		if (table2.isEmpty())
-			return table1;
-		for (String key2 : table2.keySet()) {
-			if (table1.containsKey(key2)) {
-				Holding old = table1.get(key2);
-				old.addToHolding(table2.get(key2));
-				table1.put(key2, old);
-			} else {
-				table1.put(key2, table2.get(key2));
+		
+		Hashtable<String, String> cusipTicker = null;
+		Hashtable<String, Holding> newTable = new Hashtable<String, Holding>();
+
+		try {
+			cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		if (cusipTicker == null) {
+			printStatementError("CusipTicker is not stored!");
+		}
+
+		TreeSet<String> keys = new TreeSet<String>();
+		keys.addAll(table1.keySet());
+		keys.addAll(table2.keySet());
+		//TODO combine two Keys?
+		for (String key : keys) {
+			if(cusipTicker.containsKey(key)){
+				if (table1.containsKey(key) && table2.containsKey(key)) {
+					Holding old = table1.get(key);
+					old.addToHolding(table2.get(key));
+					newTable.put(key, old);
+				} else if(table1.containsKey(key)){
+					newTable.put(key, table1.get(key));
+				} else if(table2.containsKey(key)){
+					newTable.put(key, table2.get(key));
+				} else 
+					printStatementError("Neither Tables Contain Key - Fix IT!");
+				
 			}
 		}
-		return table1;
+		System.out.println("Table Size "+ newTable.size());
+		return newTable;
 	}
 
 	public Hashtable<Holding, String> switchMapping(
@@ -206,63 +232,32 @@ public class SECData {
 		return newTable;
 	}
 
-	public String getTicker(String cusip) {
-
-		StringBuffer bf = new StringBuffer();
-		try {
-			URL url = new URL(
-					"http://activequote.fidelity.com/mmnet/SymLookup.phtml?QUOTE_TYPE=&scCode=E&searchBy=C&searchFor="
-							+ cusip);
-			try {
-				Thread.sleep(convertSecondToMillis(.5));
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					url.openStream()));
-			String line;
-
-			while ((line = reader.readLine()) != null) {
-				bf.append(line + "\n");
-			}
-			reader.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		System.out.println(cusip);
-		String wholeFile = bf.toString();
-		// System.out.println(wholeFile);
-		Pattern start = Pattern.compile("SID_VALUE_ID=");
-		Pattern end = Pattern.compile("SID_VALUE_ID=[^>]*");
-		Matcher mStart = start.matcher(wholeFile);
-		Matcher mEnd = end.matcher(wholeFile);
-		if (mStart.find() && mEnd.find()) {
-			System.out.println(mStart.end() + 1);
-			System.out.println(mEnd.end() - 2);
-			return wholeFile.substring(mStart.end(), mEnd.end() - 1);
-		}
-		return "";
-	}
-
-	public long convertSecondToMillis(double d) {
+	private long convertSecondToMillis(double d) {
 		return (long) (1000 * d);
 	}
 
+	@SuppressWarnings("unchecked")
 	public void formatSEC13Fs(String quarterDir) throws IOException, ClassNotFoundException{
 		File[] allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles();
 		File13F f13F;
-		int index = 0;
-//		for(File f : allFiles){
+
+	//		for(File f : allFiles){
 		//761??? 1499
 		
 		Set<String> cusips;
 		
-		Hashtable<String, Holding> allHoldings = new Hashtable<String, Holding>();
-		Hashtable<String, String> cusipTicker = new Hashtable<String, String>();
-		Hashtable<String, String> badCusipTicker = new Hashtable<String, String>();
-		String tick;
-		for(int ii = 0; ii< allFiles.length; ii++){
+		Hashtable<String, Holding> allHoldings = null;
+		
+		allHoldings = (Hashtable<String, Holding>) loadData(tempFolder+"allHoldings.data");		
+		if(allHoldings == null)
+			allHoldings = new Hashtable<String, Holding>();
+		
+		Integer index = 0;		
+		index = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
+		if(index == null)
+			index = 0;
+		
+		for(int ii = index; ii< allFiles.length; ii++){
 			System.out.println(allFiles[ii].getPath() + " " + ii);
 			f13F = new File13F(allFiles[ii]);
 //			f13F = new File13F(new File("filings/13Fs/2010/QTR1/data/0000022356-10-000028.txt"));
@@ -272,24 +267,11 @@ public class SECData {
 			//TODO save fund and holdings
 			
 			cusips = newHoldings.keySet();
-			System.out.println(); //cusips.iterator().next()));
+			System.out.println(cusips.size()); //cusips.iterator().next()));
 			
-			for(String c: cusips){
-				if(!cusipTicker.contains(c) && cusipTicker.contains(c)){
-					tick = getTicker(c);
-					if(!tick.equals("")){
-						cusipTicker.put(c, tick);
-					}else
-						badCusipTicker.put(c, tick);
-				}
-			}
+			System.out.println(f13F.getMatchType());
 			
-//			saveData(cusipTicker);
-//			Hashtable<String,String> x = loadData("myobject.data");
-//			if(x.equals(cusipTicker))
-//				printStatementError("AMMMMMMMAAAZINg");
-			//		index = 1/0;
-//			System.out.println(f13F.getCompanyName() + " " + ii);
+			
 			
 			if(cusips.size() == 0 && verifySmallFileSize(allFiles[ii])){
 				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
@@ -299,19 +281,15 @@ public class SECData {
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/"), allFiles[ii].getName()));
 				System.out.println("Dont think this is a bad file, " +f13F.getMatchType() + " " + allFiles[ii].getPath());
 //				System.exit(1);
-		    }else
+		    }else{	
+		    	storeCusips(cusips);
 		    	allHoldings = combineTableEntries(allHoldings, newHoldings);
+		    	saveData(tempFolder+"allHoldings.data", allHoldings);
+		    }
+
+			saveData(tempFolder+"formatSEC13FsIndex.data", ii);
 			
-			Hashtable<Holding, String> holdingToString = switchMapping(allHoldings);
-			TreeSet<Holding> holdingToStringKeys = new TreeSet<Holding>(holdingToString.keySet());
-			Holding val;
-			for(int i= 1; i< holdingToStringKeys.size(); i++){
-				val = holdingToStringKeys.pollLast();
-				System.out.println(val + " " + holdingToString.get(val));
-			}
-			
-			
-			
+
 			
 			//System.out.println(f.getPath());
 
@@ -320,31 +298,79 @@ public class SECData {
 			//get Fund name
 			//get ticker, CUSIPS, value, shares
 		}
-		saveData("cusipToTicker.data",cusipTicker);
-		saveData("allHoldings.data", allHoldings);
-		
-		
-	}
-	
 
-	
-	public double convert2num(String st){
 		
-	Pattern start = Pattern.compile("Shares Outstanding");
-	Matcher mStart = start.matcher(st);
-	if(mStart.find())
-		return new Double(st.substring(mStart.end()+1));
-	else
-		return 0;
-	
+		
+		getTopTwentyMostConcentrated();
+		
+		
 	}
 	
-	public double getSharesOutstanding(String ticker){
+	@SuppressWarnings("unchecked")
+	public ArrayList<String> getTopTwentyMostConcentrated() throws IOException, ClassNotFoundException{
+		ArrayList<String> mostConcentrated = new ArrayList<String>();
+		Hashtable<String, Holding> allHoldings = (Hashtable<String, Holding>) loadData(tempFolder+"allHoldings.data");
+		Hashtable<String, Holding> allHoldingsConcentrated = new Hashtable<String, Holding>();
+		Hashtable<String, String> cusipTicker = null;
+		
+		cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
+		if(cusipTicker == null)
+			cusipTicker = new Hashtable<String, String>();
+		//getSharesOustanding for each ticker
+		//getSharesOustanding(cusipTicker)
+		//divide allHoldings by sharesOustanding
+
+		for(String c: allHoldings.keySet()){
+			if(!cusipTicker.contains(c))
+				printStatementError("WHY IS " + c + " in holdings!");
+		}
+		
+		getSharesOuststanding(cusipTicker.keySet());
+		
+		Double shares;
+		for(String ticker: allHoldings.keySet()){
+			shares = getSharesOutstanding(ticker);
+			Holding concetrationHolding = allHoldings.get(ticker);
+			concetrationHolding.setShares(allHoldings.get(ticker).getShares()/shares);
+			allHoldingsConcentrated.put(ticker, concetrationHolding);
+		}
+		
+		Hashtable<Holding, String> holdingToString = switchMapping(allHoldingsConcentrated);
+		TreeSet<Holding> holdingToStringKeys = new TreeSet<Holding>(holdingToString.keySet());
+		Holding val;
+		for(int i= 1; i< holdingToStringKeys.size(); i++){
+			val = holdingToStringKeys.pollLast();
+			System.out.println(val + " " + holdingToString.get(val));
+			mostConcentrated.add(holdingToString.get(val));
+		}		
+		
+		return mostConcentrated;
+	}
+		
+	@SuppressWarnings("unchecked")
+	private double getSharesOutstanding(String ticker){
+		
+		//load sharesOutstanding HashTable
+		
+		Hashtable<String, Double> tickerToSharesOutstanding = null;
+		
+		try{
+			tickerToSharesOutstanding = (Hashtable<String, Double>) loadData(tempFolder+"tickerToSharesOutstanding.data");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		if(tickerToSharesOutstanding == null)
+			tickerToSharesOutstanding = new Hashtable<String, Double>();
+		else if(tickerToSharesOutstanding.containsKey(ticker))
+			return tickerToSharesOutstanding.get(ticker);
+		
 		StringBuffer bf = new StringBuffer();
 		try {
-			URL url = new URL("'http://www.google.com/finance?fstype=bi&q="+ ticker);
+			URL url = new URL("http://www.google.com/finance?fstype=bi&q="+ ticker);
 			try {
-				Thread.sleep(convertSecondToMillis(.5));
+				Thread.sleep(convertSecondToMillis(.25));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -366,18 +392,137 @@ public class SECData {
 		Pattern start = Pattern.compile("Shares Outstanding");
 		Matcher mStart = start.matcher(wholeFile);
 		mStart.find();
-		Pattern end = Pattern.compile("<td align=\"right\" bgcolor=\"#FFFFFF\">&nbsp;<b>");
-		Pattern endEnd = Pattern.compile("&nbsp;</b></td>");
+		Pattern end = Pattern.compile("<td class=\"r bld\">");
+		Pattern endEnd = Pattern.compile("/");
 		
 		Matcher mEnd = end.matcher(wholeFile.substring(mStart.start()));
-		Matcher mEndEnd = endEnd.matcher(wholeFile.substring(mStart.start()));
-		if (mEnd.find() && mEndEnd.find()) {
-			return convert2num(wholeFile.substring(mEnd.end(), mEnd.end() - 1));
+		mEnd.find();
+		Matcher mEndEnd = endEnd.matcher(wholeFile.substring(mEnd.start()));
+//		System.out.println(wholeFile.substring(mStart.start(), mStart.start()+mEnd.end()));
+//		System.out.println(mEndEnd.find());
+		if (mEndEnd.find()) {
+//			System.out.println(wholeFile.substring(mStart.start()));
+//			System.out.println(wholeFile.substring(mStart.start()+mEnd.end(),mStart.start()+ mEnd.end()+mEndEnd.end()+1));
+			double shares = new Double(wholeFile.substring(mStart.start()+mEnd.end(),mStart.start()+ mEnd.end()+mEndEnd.end()+1));
+			//Save sharesOutstanding HashTable
+			tickerToSharesOutstanding.put(ticker,shares);
+			try {
+				saveData(tempFolder +"tickerToSharesOutstanding.data", tickerToSharesOutstanding);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return shares;
+			
 		}
+		printStatementError("No match in Shares Outstanding");
 		return 0;
 	}
 	
+	private String getTicker(String cusip) {
+
+		StringBuffer bf = new StringBuffer();
+		try {
+			URL url = new URL(
+					"http://activequote.fidelity.com/mmnet/SymLookup.phtml?QUOTE_TYPE=&scCode=E&searchBy=C&searchFor="
+							+ cusip);
+			try {
+				Thread.sleep(convertSecondToMillis(.25));
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					url.openStream()));
+			String line;
+
+			while ((line = reader.readLine()) != null) {
+				bf.append(line + "\n");
+			}
+			reader.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		//System.out.println(cusip);
+		String wholeFile = bf.toString();
+		// System.out.println(wholeFile);
+		Pattern start = Pattern.compile("SID_VALUE_ID=");
+		Pattern end = Pattern.compile("SID_VALUE_ID=[^>]*");
+		Matcher mStart = start.matcher(wholeFile);
+		Matcher mEnd = end.matcher(wholeFile);
+		if (mStart.find() && mEnd.find()) {
+//			System.out.println(mStart.end() + 1);
+//			System.out.println(mEnd.end() - 2);
+			return wholeFile.substring(mStart.end(), mEnd.end() - 1);
+		}
+		return "";
+	}
+	
+
+	public Hashtable<String, Double> getSharesOuststanding(Set<String> tickers){
+		Hashtable<String,Double> tickersToShares = new Hashtable<String, Double>();
+		
+		double shares;
+		for(String tick: tickers){
+			shares = getSharesOutstanding(tick);
+			tickersToShares.put(tick, shares);
+		}
+		
+		return tickersToShares;
+	}
+
+	
+	
+	@SuppressWarnings("unchecked")
+	private void storeCusips(Set<String> cusips){
+		
+		Hashtable<String, String> cusipTicker = null;
+		Hashtable<String, String> badCusipTicker = null;
+		
+		try{
+			cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
+			badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data");
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		if(cusipTicker == null)
+			cusipTicker = new Hashtable<String, String>();
+		if(badCusipTicker == null)
+			badCusipTicker = new Hashtable<String, String>();
+		
+		System.out.println("Number stored cusip " + cusipTicker.size());
+		System.out.println("Number stored badCusip " + badCusipTicker.size());
+		
+		String tick;
+		for(String c: cusips){
+			//System.out.println(c + " " + newHoldings.get(c));
+			if(!cusipTicker.containsKey(c) && !badCusipTicker.containsKey(c)){
+				tick = getTicker(c);
+				System.out.println(tick+" Cusip:"+c);
+				if(!tick.equals("")){
+//					System.out.println(tick);
+					cusipTicker.put(c, tick);
+				}else
+					badCusipTicker.put(c, tick);
+			}
+		}
+		
+		try {
+			saveData(tempFolder+"cusipTicker.data", cusipTicker);
+			saveData(tempFolder+"badCusipTicker.data", badCusipTicker);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
 	public void saveData(String filename, Object obj) throws IOException{
+		File n = new File(filename);
+		if(!n.exists())
+			n.createNewFile();
 		FileOutputStream f_out = new FileOutputStream(filename);
 
 		// Write object with ObjectOutputStream
@@ -387,9 +532,12 @@ public class SECData {
 		obj_out.writeObject (obj);
 	}
 	
-	public Object loadData(String fileName) throws IOException, ClassNotFoundException{
+	public Object loadData(String filename) throws IOException, ClassNotFoundException{
+		File n = new File(filename);
+		if(!n.exists())
+			return null;
 		// Read from disk using FileInputStream
-		FileInputStream f_in = new FileInputStream("myobject.data");
+		FileInputStream f_in = new FileInputStream(filename);
 
 		// Read object using ObjectInputStream
 		ObjectInputStream obj_in = new ObjectInputStream (f_in);

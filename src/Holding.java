@@ -1,5 +1,5 @@
 
-public class Holding implements Comparable<Holding>{
+public class Holding implements Comparable<Holding>, java.io.Serializable{
 
 	private double shares;
 	private double value;
@@ -13,10 +13,17 @@ public class Holding implements Comparable<Holding>{
 		return shares;
 	}
 	
+	public void setShares(double newShares){
+		shares = newShares;
+	}
+	
 	public double getValue(){
 		return value;
 	}
 	
+	public void setValue(double newVal){
+		value = newVal;
+	}
 	
 	public void addToHolding(Holding newHolding){
 		shares += newHolding.getShares();
@@ -32,7 +39,7 @@ public class Holding implements Comparable<Holding>{
 	}
 	
 	public String toString(){
-		return "Shares: " + shares + " Value: "+ value;
+		return " Value: "+ value + "Shares: " + shares;
 	}
 	
 	
