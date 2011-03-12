@@ -1,11 +1,11 @@
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
-import java.util.Set;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -98,20 +98,6 @@ public class File13F {
         wholeFile = wholeFile.replaceAll( "=", " ");
 
         setNumClaimedHoldings(wholeFile);
-//		//Berkshire Hathaway case:
-//		//One line is standard
-//		//next lines until the next holding do not have Company or CUSIP
-//		type2 = false;
-//		[start2 finish2] = regexp(str, '\n[\t\$ ]+[0-9,.]{1,8}[\t ]+[0-9,.]+ |');
-//
-//			type2_ind=1;
-//			while type2_ind < length(start2) && start2(type2_ind) < start(1)
-//			    type2_ind = type2_ind+1;
-//			end
-//
-//			if type2_ind == length(start2) && start2(type2_ind) < start(1) 
-//			    type2 = false;
-//			end
 		
 		ArrayList<String> bestMatch = getListMatches(wholeFile);
 		if(!matchedHoldingsCloseToClaimed(wholeFile, bestMatch.size())){
@@ -120,7 +106,16 @@ public class File13F {
 			System.exit(1);
 		}
 		addHoldingsFromMatches(bestMatch);
+		
 //	    return fund13F.getHoldings().keySet();
+	}
+	
+	private void setNumClaimedHoldings(String wholeFile){
+		numClaimedHoldings = getTableEntryTotal(wholeFile);
+	}
+	
+	public int getNumClaimedHoldings(){
+		return numClaimedHoldings;
 	}
 	
 	public int getTableEntryTotal(String wholeFile){
@@ -163,9 +158,8 @@ public class File13F {
 		return 0;
 	}
 	
-	private void setNumClaimedHoldings(String wholeFile){
-		numClaimedHoldings = getTableEntryTotal(wholeFile);
-	}
+	
+	/* Functions to verify that number of matches is close to what is expected given the file*/
 	
 	public boolean matchedHoldingsCloseToClaimed(String wholeFile, int numFound){
 		//return false only if numClaimedHoldings not zero OR 
@@ -174,6 +168,24 @@ public class File13F {
 		return (numFound-numClaimedHoldings)/(numClaimedHoldings+1) < .25 ; //within twenty-five percent
 	}
 	
+	public int count(String filename) throws IOException {
+		InputStream is = new BufferedInputStream(new FileInputStream(filename));
+		byte[] c = new byte[1024];
+		int count = 0;
+		int readChars = 0;
+		while ((readChars = is.read(c)) != -1) {
+			for (int i = 0; i < readChars; ++i) {
+				if (c[i] == '\n')
+					++count;
+			}
+		}
+		return count;
+	}
+
+	public boolean verifySmallFileSize(File f) throws IOException {
+		return count(f.getPath()) < 200;
+	}
+
 
 
 	public boolean isStringNumber(String in) {
@@ -191,7 +203,6 @@ public class File13F {
 		String valueTemp;
 		String sharesTemp;
 		int numNotEnoughVals= 0;
-		System.out.println(matchType);
 		
 		String newline;
 				
@@ -210,7 +221,14 @@ public class File13F {
 		    	//System.out.println(cusipString);
 		    	if(!hasNumber(cusipString))
 		    		continue;
+		    	try{
 		    	cusipString = cusipString +  getCusipCheckDigit(cusipString);
+		    	}catch(IllegalArgumentException e){
+		    		System.err.println(matchType);
+		    		System.err.println(bestMatch);
+		    		e.printStackTrace();
+		    		System.exit(1);
+		    	}
 		    }
 		    
 		    //Case where 5-2-1
@@ -235,6 +253,7 @@ public class File13F {
 		    }
 		    
 		    if(matchType.contains("Name Ticker Cusip Switched")){
+		    	System.out.println(line);
 		    	valueTemp = tempToken.nextToken();
 		    	valueTemp = tempToken.nextToken();
 		    }
@@ -300,7 +319,6 @@ public class File13F {
 	    	    
 	    if (cusip.length() != 9 || !Character.isDigit(cusip.charAt(8)))
 	        return false;
-
 	    if (getCusipCheckDigit(cusip.substring(0,8)) != cusip.charAt(8) )
 	        return false;
 
@@ -308,12 +326,11 @@ public class File13F {
 	}
 	
 	//Determines the CUSIP check digit, algorithm from Wikipedia
-	public static char getCusipCheckDigit(String cusip){
+	public static char getCusipCheckDigit(String cusip) throws IllegalArgumentException{
 	  int sum = 0, v =0, p, result;
 	  char c;
 	   if(cusip.length() != 8){
-	       System.err.println("Error input for checkCusipDigit not correct length (8), Length:" + cusip.length()+ " " + cusip);
-	       System.exit(1);
+	       throw new IllegalArgumentException("Error input for checkCusipDigit not correct length (8), Length:" + cusip.length()+ " " + cusip);
 	   }
 	   
 	   for(int ii = 0; ii < cusip.length(); ii++){
@@ -390,8 +407,8 @@ public class File13F {
 	private String letters = "[A-Za-z]";
 	private String nineLettersAndDigits = notLetter+lettersAndDigits + "{9}";
 	private String nineLetters = notLetter + letters+ "{9}";
-	private String eightLettersAndDigits = notDigit+lettersAndDigits + "{8}";
-	private String eightLetters = notDigit+letters+ "{8}";
+	private String eightLettersAndDigits = notLetter+ notDigit+lettersAndDigits + "{8}";
+	private String eightLetters = notLetter+notDigit+letters+ "{8}";
 	private String manyLetters = letters +"+";
 	private String name = "[A-Za-z ]+";
 	private String space = "[\t\n$=, ]+";
@@ -466,20 +483,27 @@ public class File13F {
 	
 	
 	public ArrayList<String> getListMatches(String wholeFile) {
-
+		
+//		wholeFile.replaceAll("[A-Za-z]{8}", "");
 		ArrayList<String> bestMatch = getListMatchesDefault(wholeFile);
-		matchType = "Default";
-
-//		System.out.println(bestMatch.size()+ " " + bestMatch);
+		
+		//Since Default covers most 13F filings check if it is within 1% of the number reported
+		//If it is then default is likely as good as it gets. 
+		//Otherwise run through all the other possibilities
+		if(numClaimedHoldings != 0 && (bestMatch.size() + numClaimedHoldings*.01 >= numClaimedHoldings))
+			return bestMatch;
+		
+//		System.out.println(bestMatch.size()+ " " + bestMatch + " " + numClaimedHoldings);
 		
 		ArrayList<String> bestMatchTemp = getListMatchesSoleShareSwitched(wholeFile);
 		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
 			bestMatch = bestMatchTemp;
 			matchType = "Sole Shares Switched ";
 		}
-		
+
 		bestMatchTemp = getListMatchesSoleShareSwitchedEight(wholeFile);
 		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
+
 			bestMatch = bestMatchTemp;
 			matchType = "Sole Shares Switched "+ "Eight Digit ";
 		}
@@ -492,16 +516,16 @@ public class File13F {
 
 		bestMatchTemp = getListMatchesEightDigit(wholeFile);
 		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
-			System.out.println(bestMatch);
-			System.out.println(bestMatchTemp);
-			System.out.println(bestMatchTemp.size());
-			System.out.println(bestMatch.size());
+//			System.out.println(bestMatch);
+//			System.out.println(bestMatchTemp);
+//			System.out.println(bestMatchTemp.size());
+//			System.out.println(bestMatch.size());
 			bestMatch = bestMatchTemp;
 			matchType = "Eight Digit ";
 		}
 
 		bestMatchTemp = getListMatchesNameCusipSwitched(wholeFile);
-		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
+		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
 			bestMatch = bestMatchTemp;
 			matchType = "Name Cusip Switched ";
 		}
@@ -511,19 +535,19 @@ public class File13F {
 			bestMatch = bestMatchTemp;
 			matchType = "Name Cusip Switched "+ "Eight Digit ";
 		}
-		
+
 		bestMatchTemp = getListMatchesNameTickerCusipSwitched(wholeFile);
-		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
+		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
 			bestMatch = bestMatchTemp;
 			matchType = "Name Ticker Cusip Switched ";
 		}
-		
+
 		bestMatchTemp = getListMatchesNameTickerCusipSwitchedEight(wholeFile);
 		if (bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()*eightDigitFactor) {
 			bestMatch = bestMatchTemp;
 			matchType = "Name Ticker Cusip Switched " + "Eight Digit ";
 		}
-		
+
 		bestMatchTemp = getListMatchesNoValue(wholeFile);
 		if ( bestMatchTemp != null && bestMatchTemp.size() > bestMatch.size()) {
 			if(bestMatch == null || bestMatch.size() < 10){
@@ -531,6 +555,7 @@ public class File13F {
 				matchType = "No Value ";
 			}	
 		}
+		
 		return bestMatch;
 	}
 	

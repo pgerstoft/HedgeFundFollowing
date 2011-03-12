@@ -4,15 +4,11 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.apache.commons.net.PrintCommandListener;
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
-import org.apache.commons.net.ftp.FTPConnectionClosedException;
-import org.apache.commons.net.ftp.FTPFile;
-import org.apache.commons.net.ftp.FTPReply;
-
+//TODO Run through getMaches for each 13F, fix any problems...
+//TODO getSharesOutsanding and do Concentration
 //TODO Set up Stock
-//TODO Set up 
+//TODO Set up Financial Data
+//TODO check out if there are a lot of bad cusips and eight Digit
 
 public class SECData {
 
@@ -156,7 +152,6 @@ public class SECData {
 			compIdx13F.createNewFile();
 			Grep.grep(compIdx, compIdx13F, "13F-HR[^/A]");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -179,6 +174,7 @@ public class SECData {
 		return count(f.getPath()) < 200;
 	}
 
+	@SuppressWarnings("unchecked")
 	public Hashtable<String, Holding> combineTableEntries(
 			Hashtable<String, Holding> table1, Hashtable<String, Holding> table2) {
 		
@@ -188,10 +184,8 @@ public class SECData {
 		try {
 			cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 
@@ -202,7 +196,7 @@ public class SECData {
 		TreeSet<String> keys = new TreeSet<String>();
 		keys.addAll(table1.keySet());
 		keys.addAll(table2.keySet());
-		//TODO combine two Keys?
+
 		for (String key : keys) {
 			if(cusipTicker.containsKey(key)){
 				if (table1.containsKey(key) && table2.containsKey(key)) {
@@ -268,7 +262,6 @@ public class SECData {
 			
 			cusips = newHoldings.keySet();
 			System.out.println(cusips.size()); //cusips.iterator().next()));
-			
 			System.out.println(f13F.getMatchType());
 			
 			
@@ -287,9 +280,9 @@ public class SECData {
 		    	saveData(tempFolder+"allHoldings.data", allHoldings);
 		    }
 
-			saveData(tempFolder+"formatSEC13FsIndex.data", ii);
+			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
 			
-
+		}
 			
 			//System.out.println(f.getPath());
 
@@ -297,7 +290,7 @@ public class SECData {
 //			TODO LOOK At state of incorporation
 			//get Fund name
 			//get ticker, CUSIPS, value, shares
-		}
+		
 
 		
 		
@@ -483,7 +476,16 @@ public class SECData {
 			cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
 			badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data");
 		} catch (IOException e) {
-			e.printStackTrace();
+			try {
+				cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data.temp");
+				badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data.temp");
+			} catch (IOException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			} catch (ClassNotFoundException e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -507,6 +509,14 @@ public class SECData {
 				}else
 					badCusipTicker.put(c, tick);
 			}
+		}
+		
+		//save the data twice in case determination causes a EOFException
+		try {
+			saveData(tempFolder+"cusipTicker.data.temp", cusipTicker);
+			saveData(tempFolder+"badCusipTicker.data.temp", badCusipTicker);
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 		
 		try {

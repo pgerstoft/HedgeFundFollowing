@@ -26,17 +26,8 @@ public class Script {
 		
 	}
 }
-
-/*Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-Mathematical Statistics and Data Analysis (Hardcover)
-File13F.numClaimedHoldings
- * Download Data Check
+/*
+ * Download Data X
  * Get Data from Files
  * Store Data - in  a .csv First Name, Year Quarter, CUSIP, Ticker, 
  */
