@@ -9,6 +9,7 @@ import java.util.regex.Pattern;
 //TODO Set up Stock
 //TODO Set up Financial Data
 //TODO check out if there are a lot of bad cusips and eight Digit
+//TODO Set up a system for storing vars, and writing variables twice
 
 public class SECData {
 
@@ -269,19 +270,20 @@ public class SECData {
 			if(cusips.size() == 0 && verifySmallFileSize(allFiles[ii])){
 				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"NoHoldings/"), allFiles[ii].getName()));
+				ii = ii - 1;
 			}else if( cusips.size() == 0){
 				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/"), allFiles[ii].getName()));
 				System.out.println("Dont think this is a bad file, " +f13F.getMatchType() + " " + allFiles[ii].getPath());
+				ii = ii - 1;
 //				System.exit(1);
 		    }else{	
 		    	storeCusips(cusips);
 		    	allHoldings = combineTableEntries(allHoldings, newHoldings);
+		    	//TODO allHoldings should also keep track of which Funds have already been added
 		    	saveData(tempFolder+"allHoldings.data", allHoldings);
 		    }
-
 			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
-			
 		}
 			
 			//System.out.println(f.getPath());
@@ -496,7 +498,7 @@ public class SECData {
 		
 		System.out.println("Number stored cusip " + cusipTicker.size());
 		System.out.println("Number stored badCusip " + badCusipTicker.size());
-		
+		//TODO had a check to see if there are a lot of badCusips
 		String tick;
 		for(String c: cusips){
 			//System.out.println(c + " " + newHoldings.get(c));
