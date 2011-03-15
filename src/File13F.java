@@ -21,6 +21,7 @@ public class File13F {
 	private Fund fund13F;
 	private String matchType;
 	private int numClaimedHoldings;
+	private int numLines;
 	
 	public File13F(String filePath){
 		
@@ -36,12 +37,14 @@ public class File13F {
 			System.exit(1);
 		}
 		fund13F = new Fund();
-		matchType ="";
+		matchType = "";
 		setCompanyName();
 		try {
+			numLines = count(f13F.getPath());
 			initFund();
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.exit(1);
 		}
 		
 	}
@@ -100,15 +103,17 @@ public class File13F {
         setNumClaimedHoldings(wholeFile);
 		
 		ArrayList<String> bestMatch = getListMatches(wholeFile);
-		if(!matchedHoldingsCloseToClaimed(wholeFile, bestMatch.size())){
+		//numClaimedHoldings must be less than or equal to the number of lines (consider one line per holding and heading)
+		if(numClaimedHoldings <= numLines && !matchedHoldingsCloseToClaimed(wholeFile, bestMatch.size())){
 			System.err.println("This file's number of matches doesnt match number of claimed holdings: " + f13F.getPath()
 					+"\nNumber of found: "+ bestMatch.size()+" Number Claimed in File:"+ numClaimedHoldings);
-			System.out.println(bestMatch);
+			System.err.println(matchType);
+			System.err.println(bestMatch);
+			System.err.println("Number of Lines " + numLines);
 			System.exit(1);
 		}
 		addHoldingsFromMatches(bestMatch);
 		
-//	    return fund13F.getHoldings().keySet();
 	}
 	
 	private void setNumClaimedHoldings(String wholeFile){
@@ -184,7 +189,7 @@ public class File13F {
 	}
 
 	public boolean verifySmallFileSize(File f) throws IOException {
-		return count(f.getPath()) < 200;
+		return numLines < 200;
 	}
 
 
