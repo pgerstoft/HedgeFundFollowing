@@ -101,10 +101,21 @@ public class File13F {
         wholeFile = wholeFile.replaceAll( "=", " ");
 
         setNumClaimedHoldings(wholeFile);
+
+        //Most common case is where Cusip  Number Number and comma is part of number
+        //Get rid of commas to identify Cusip Number; Cusip 70,000 is not Cusip 70 000
+		ArrayList<String> bestMatch = getListMatches(wholeFile.replaceAll(",", ""));
+		if(bestMatch.size() == 0)
+			bestMatch = getListMatches(wholeFile);
 		
-		ArrayList<String> bestMatch = getListMatches(wholeFile);
+		//TEST CASE
+		if(matchType.isEmpty()){
+			System.err.println("Match Type is empty");
+			System.exit(1);
+		}
+		
 		//numClaimedHoldings must be less than or equal to the number of lines (consider one line per holding and heading)
-		if(numClaimedHoldings <= numLines && !matchedHoldingsCloseToClaimed(wholeFile, bestMatch.size())){
+		if(numClaimedHoldings > 0 && !matchedHoldingsCloseToClaimed(wholeFile, bestMatch.size())){
 			System.err.println("This file's number of matches doesnt match number of claimed holdings: " + f13F.getPath()
 					+"\nNumber of found: "+ bestMatch.size()+" Number Claimed in File:"+ numClaimedHoldings);
 			System.err.println(matchType);
@@ -112,12 +123,15 @@ public class File13F {
 			System.err.println("Number of Lines " + numLines);
 			System.exit(1);
 		}
+				
 		addHoldingsFromMatches(bestMatch);
 		
 	}
 	
 	private void setNumClaimedHoldings(String wholeFile){
 		numClaimedHoldings = getTableEntryTotal(wholeFile);
+		if(numClaimedHoldings > numLines)
+			numClaimedHoldings = -1;
 	}
 	
 	public int getNumClaimedHoldings(){
@@ -161,7 +175,7 @@ public class File13F {
 		}
 			
 			
-		return 0;
+		return -1;
 	}
 	
 	
@@ -274,7 +288,8 @@ public class File13F {
 		    }
 		    else{
 		    	//get an ERROR
-		    	System.out.println(matchType+ " " +line+ " "+ cusipString+" value: "+ valueTemp + " " +newline);
+		    	System.out.println(bestMatch);
+		    	System.out.println("MatchType: " + matchType+ " Line: " +line+ " cusip:"+ cusipString+" value: "+ valueTemp + " NewLine: " +newline);
 		    	sharesTemp = tempToken.nextToken();
 		    }
 		    	
@@ -409,20 +424,20 @@ public class File13F {
 			return new ArrayList<String>();
 	}
 	
-	private String notLetter = "[^A-Za-z]";
-	private String notDigit = "[^0-9]";
-	private String notDigitORLetter = "[^A-Za-z0-9]";
-	private String lettersAndDigits = "[0-9A-Za-z]";
-	private String letters = "[A-Za-z]";
-	private String name = "[A-Za-z ]+";
-	private String space = "[\t\n$=, ]+";
-	private String number = "[0-9,.]+";
+	private static String notLetter = "[^A-Za-z]";
+	private static String notDigit = "[^0-9]";
+	private static String notDigitORLetter = "[^A-Za-z0-9]";
+	private static String lettersAndDigits = "[0-9A-Za-z]";
+	private static String letters = "[A-Za-z]";
+	private static String name = "[A-Za-z ]+";
+	private static String space = "[\t\n$=, ]+";
+	private static String number = "[0-9,.]+";
 	
-	private String nineLettersAndDigits = notLetter+lettersAndDigits + "{9}";
-	private String nineLetters = notLetter + letters+ "{9}";
-	private String eightLettersAndDigits = notDigitORLetter+lettersAndDigits + "{8}";
-	private String eightLetters = notDigitORLetter+letters+ "{8}";
-	private String manyLetters = letters +"+";
+	private static String nineLettersAndDigits = notLetter+lettersAndDigits + "{9}";
+	private static String nineLetters = notLetter + letters+ "{9}";
+	private static String eightLettersAndDigits = notDigitORLetter+lettersAndDigits + "{8}";
+	private static String eightLetters = notDigitORLetter+letters+ "{8}";
+	private static String manyLetters = letters +"+";
 
 	private String sixTwoOneLettersAndDigits = lettersAndDigits+"{6}" +" "+lettersAndDigits+"{2}"+ " "+ lettersAndDigits+"{1} ";
 	private String sixTwoOneLetters = letters+"{6}" +" "+letters+"{2}"+ " "+ letters+"{1}";
@@ -507,13 +522,16 @@ public class File13F {
 	
 	public ArrayList<String> getListMatches(String wholeFile) {
 		
-//		wholeFile.replaceAll("[A-Za-z]{8}", "");
 		ArrayList<String> bestMatch = getListMatchesDefault(wholeFile);
-		
+		matchType = "Default ";
 		//Since Default covers most 13F filings check if it is within 1% of the number reported
 		//If it is then default is likely as good as it gets. 
 		//Otherwise run through all the other possibilities
-		if(numClaimedHoldings != 0 && (bestMatch.size() + numClaimedHoldings*.01 >= numClaimedHoldings))
+//		System.out.println(wholeFile);
+//		System.out.println(bestMatch.size());
+//		System.out.println(numClaimedHoldings);
+//		
+		if(numClaimedHoldings > 0 && (bestMatch.size() + numClaimedHoldings*.01 >= numClaimedHoldings))
 			return bestMatch;
 		
 //		System.out.println(bestMatch.size()+ " " + bestMatch + " " + numClaimedHoldings);
