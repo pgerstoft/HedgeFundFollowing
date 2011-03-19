@@ -10,6 +10,9 @@ import java.util.regex.Pattern;
 //TODO Set up Financial Data
 //TODO check out if there are a lot of bad cusips and eight Digit
 //TODO Set up a system for storing vars, and writing variables twice
+//TODO check that you are connected to the internet!
+
+
 
 public class SECData {
 
@@ -252,7 +255,7 @@ public class SECData {
 		if(index == null)
 			index = 0;
 		
-		for(int ii = index; ii< allFiles.length; ii++){
+		for(int ii = index+1; ii< allFiles.length; ii++){
 			System.out.println(allFiles[ii].getPath() + " " + ii);
 			f13F = new File13F(allFiles[ii]);
 //			f13F = new File13F(new File("filings/13Fs/2010/QTR1/data/0000022356-10-000028.txt"));
@@ -270,19 +273,26 @@ public class SECData {
 			if(cusips.size() == 0 && verifySmallFileSize(allFiles[ii])){
 				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"NoHoldings/"), allFiles[ii].getName()));
+				
+				//update allFiles to reflect file removal
+				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
 				ii = ii - 1;
 			}else if( cusips.size() == 0){
 				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/"), allFiles[ii].getName()));
 				System.out.println("Dont think this is a bad file, " +f13F.getMatchType() + " " + allFiles[ii].getPath());
+				
+				//update allFiles to reflect file removal
+				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
 				ii = ii - 1;
-//				System.exit(1);
+				System.exit(1);
 		    }else{	
 		    	storeCusips(cusips);
 		    	allHoldings = combineTableEntries(allHoldings, newHoldings);
 		    	//TODO allHoldings should also keep track of which Funds have already been added
 		    	saveData(tempFolder+"allHoldings.data", allHoldings);
 		    }
+			
 			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
 		}
 			

@@ -13,14 +13,12 @@ public class Script {
 			
 		inst.formatSEC13Fs(quarterDir);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	
 //		inst.createCompanyIdx13F();
 		//Format Data
 		//get top twenty stocks
  catch (ClassNotFoundException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		
