@@ -6,19 +6,13 @@ public class Script {
 	public static void main(String[] args){
 		//Download SEC data
 		SECData inst = SECData.getInstance();
-//		System.out.println(inst.downloadSEC13Fs());
 		String quarterDir = "2010/QTR1/";
-//		inst.get13Fs(quarterDir);
 		try {
-			
-		inst.formatSEC13Fs(quarterDir);
+			inst.downloadCurrentSEC13Fs(true);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}	
-//		inst.createCompanyIdx13F();
-		//Format Data
-		//get top twenty stocks
- catch (ClassNotFoundException e) {
+		catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
 		

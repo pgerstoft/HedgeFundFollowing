@@ -27,7 +27,7 @@ public class SECData {
 	public static String companyIdx = "company.idx";
 	private static String companyIdx13F = "company.idx.13F";
 
-	private static final SECData INSTANCE = new SECData();
+	private static final SECData INSTANCE = new SECData(); //UNSURE I WANT TO DO SINGLETON
 
 	// Private constructor prevents instantiation from other classes
 	private SECData() {
@@ -46,37 +46,143 @@ public class SECData {
 			sec13FFileDir.mkdirs();
 	}
 
-	public int downloadSEC13Fs() {
+	public int downloadCurrentSEC13Fs(boolean overRide) throws IOException, ClassNotFoundException{
+		return downloadSEC13Fs(getCurrent13FQuarter(), overRide);
+	}
+	
+	public int downloadSEC13Fs(String quarterDir, boolean overRide) throws IOException, ClassNotFoundException {
 		// check if the 13Fs have been downloaded
 		// by looking at the company.idx folder
-		String quarterDir = "2010/QTR1/";
-		getCompanyIdx(quarterDir);
-
+		
+		verifyQuarterDir(quarterDir);
+		
+		if(!overRide){
+			getCompanyIdx(quarterDir); //DO THIS EVERYTIME?
+			createCompanyIdx13F(quarterDir); //QUICK
+			resetnumFilesRead();
+			get13FsFromSEC(quarterDir); 
+		}
+		formatSEC13Fs(quarterDir);
 		return 1;
 	}
+	
+	private static void verifyQuarterDir(String quarterDir){
+		String[] fields = quarterDir.split("/");
+		Calendar cal = Calendar.getInstance();
+		int currentYear = cal.get(Calendar.YEAR);
+		try{
+			if(fields.length != 2 || !fields[1].matches("QTR[1-4]")
+					|| (new Double(fields[0]) < 1990 || new Double(fields[0]) > currentYear)
+					|| !quarterDir.endsWith("/")){
+				printStatementError("inputted quarter does not follow format /Year/QRT{quarter number} "+ quarterDir);
+			}
+		}catch(Exception e){
+			printStatementError("inputted quarter does not follow format /Year/QRT{quarter number} "+ quarterDir);
+		}
+		
+		int month = cal.get(Calendar.MONTH);
+		  //Get Time
+		int currentQuarter;
+		
+		  if(month < Calendar.MARCH) 
+			  currentQuarter = 4;
+		  else if(month  <Calendar.JUNE) 
+			  currentQuarter = 1; 
+		  else if(month < Calendar.SEPTEMBER) 
+			  currentQuarter =2;
+		  else currentQuarter = 3; 
+		  
+		  if(new Double(fields[0]) == currentYear &&  new Double(fields[1].substring(3))  > currentQuarter ){
+			  printStatementError("inputted quarter is in the future current quarter: " 
+					  + currentQuarter + " input: " +quarterDir);
+		  }
+	}
 
-	public void get13Fs(String quarterDir) {
-		File companyIdx13FFile = new File(sec13FsLocalDir + quarterDir
-				+ companyIdx13F);
-		if (!companyIdx13FFile.exists())
-			printStatementError("Download " + companyIdx
-					+ " before getting 13Fs");
+	private void resetnumFilesRead(){
+		try {
+			saveData(tempFolder+"formatSEC13FsIndex.data", 0);
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace(); 
+		}
+	}
+	
+	//Downloads company.idx from the SEC for inputted quarter	
+	private void getCompanyIdx(String quarterDir) {
+		verifyQuarterDir(quarterDir);
+		// "ftp.sec.gov anonymous pgerstoft@berkeley.edu edgar/full-index/2010/QTR1/company.idx compay.idx";
+		createFolders(sec13FsLocalDir + quarterDir);
+		String[] ftpCommand = { ftpSEC, ftpSECUser, ftpSECPassword,
+				secRemoteFullDir + quarterDir + companyIdx,
+				sec13FsLocalDir + quarterDir + companyIdx };
+		Ftp.ftpSingleFile(ftpCommand);
+	}
 
+	//Store all lines with 13F-HR in company.idx from the inputted quarter
+	private void createCompanyIdx13F(String quarterDir) {
+		verifyQuarterDir(quarterDir);
+		String file2Read = "company.idx";
+		File compIdx = new File(sec13FsLocalDir + quarterDir + file2Read);
+		if(!compIdx.exists())
+			printStatementError("Must download company.idx for: "+ quarterDir);
+		File compIdx13F = new File(sec13FsLocalDir + quarterDir + file2Read
+				+ ".13F");
+
+		try {
+			compIdx13F.createNewFile();
+			Grep.grep(compIdx, compIdx13F, "13F-HR[^/A]");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	
+	//downloads 13Fs from SEC
+	private void get13FsFromSEC(String quarterDir) {
+		
+		File companyIdx13FFile = new File(sec13FsLocalDir + quarterDir+ companyIdx13F);
+		if (!companyIdx13FFile.exists()){
+			printStatementError("Download " + companyIdx + " before getting 13Fs");
+		}
+			
 		ArrayList<String> filesRemote13F = get13FsFilesFromCompanyIdx(companyIdx13FFile);
+		if(filesRemote13F.size() == 0){
+			printStatementError("No 13Fs in CompanyIdx for quarter:" + quarterDir);
+		}
+		
+		String localFilingDir = sec13FsLocalDir + quarterDir + sec13FsFilingDir;
+		
+		//if we have already downloaded all the files, check the number downloaded,
+		String localDir = sec13FsLocalDir + quarterDir;
+		File dir = new File(localDir);
+		int numFiles = 0;
+		if(dir.exists()){		
+			File[] localDirFiles = dir.listFiles();
+			for(File d : localDirFiles){
+				if(d.isDirectory())
+					numFiles += d.list().length;
+			}
+		}
+		
+		if(numFiles == filesRemote13F.size())
+			return;
+		System.out.println(numFiles);
+		System.out.println(filesRemote13F.size());
 		ArrayList<String> filesLocal13F = new ArrayList<String>();
 		String[] split;
 		for (String path : filesRemote13F) {
 			split = path.split("/");
 			filesLocal13F.add(split[split.length - 1]);
 		}
-		String localDir = sec13FsLocalDir + quarterDir + sec13FsFilingDir;
-		createFolders(localDir);
-		String[] ftpCommand = { ftpSEC, ftpSECUser, ftpSECPassword,
-				secRemoteDataDir, localDir };
+		
+		
+		createFolders(localFilingDir);
+		String[] ftpCommand = { ftpSEC, ftpSECUser, ftpSECPassword, secRemoteDataDir, localFilingDir };
 		Ftp.ftpMultipleFiles(ftpCommand, filesRemote13F, filesLocal13F);
 	}
 
-	public static ArrayList<String> get13FsFilesFromCompanyIdx(
+	//returns a list of File names in companyIdx13F
+	private ArrayList<String> get13FsFilesFromCompanyIdx(
 			File companyIdx13FFile) {
 
 		if (!companyIdx13FFile.getPath().endsWith(companyIdx13F))
@@ -130,54 +236,105 @@ public class SECData {
 		return filesRemote13F;
 	}
 
-	private static void printStatementError(String statement) {
-		System.err.println(statement);
-		System.exit(1);
-	}
 
-	public void getCompanyIdx(String quarterDir) {
-		// "ftp.sec.gov anonymous pgerstoft@berkeley.edu edgar/full-index/2010/QTR1/company.idx compay.idx";
-
-		createFolders(sec13FsLocalDir + quarterDir);
-		String[] ftpCommand = { ftpSEC, ftpSECUser, ftpSECPassword,
-				secRemoteFullDir + quarterDir + companyIdx,
-				sec13FsLocalDir + quarterDir + companyIdx };
-		Ftp.ftpSingleFile(ftpCommand);
-	}
-
-	public static void createCompanyIdx13F() {
-		String quarterDir = "2010/QTR1/";
-		String file2Read = "company.idx";
-		File compIdx = new File(sec13FsLocalDir + quarterDir + file2Read);
-		File compIdx13F = new File(sec13FsLocalDir + quarterDir + file2Read
-				+ ".13F");
-
-		try {
-			compIdx13F.createNewFile();
-			Grep.grep(compIdx, compIdx13F, "13F-HR[^/A]");
-		} catch (IOException e) {
-			e.printStackTrace();
+	@SuppressWarnings("unchecked")
+	public void formatSEC13Fs(String quarterDir) throws IOException, ClassNotFoundException{
+		
+		verifyQuarterDir(quarterDir);
+		
+		File[] allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles();
+		File13F f13F;
+		Set<String> cusips;
+		
+		Hashtable<String, Holding> allHoldings = null;
+		allHoldings = (Hashtable<String, Holding>) loadData(tempFolder+"allHoldings.data");		
+		if(allHoldings == null)
+			allHoldings = new Hashtable<String, Holding>();
+		
+		Integer numFilesRead = 0;		
+		numFilesRead = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
+		if(numFilesRead == null)
+			numFilesRead = 0;
+		
+		if(allFiles == null || allFiles.length == 0){
+			printStatementError("No files for: "+ quarterDir);
 		}
-	}
+		
+		for(int ii = numFilesRead; ii< allFiles.length; ii++){
+			System.out.println(allFiles[ii].getPath() + " " + ii);
+//			if(!File13F.isValueBeforePrice(allFiles[ii])){
+//				System.out.println("VALUE ERROR");
+//				Runtime.getRuntime().exec("open "+ allFiles[ii].getCanonicalPath());
+//				System.exit(1);
+//			}
+			f13F = new File13F(allFiles[ii]);
+			//f13F = new File13F(new File("filings/13Fs/2010/QTR1/data/0000950123-10-013284.txt"));
+//			System.out.println(f13F.getFund());
+//			System.exit(1);
+			Hashtable<String, Holding> newHoldings = f13F.getFund().getHoldings();
+			
+			//TODO save fund and holdings
+			
+			cusips = newHoldings.keySet();			
+			
+			if(cusips.size() == 0 && f13F.isFileSmall()){
+				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
+				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"NoHoldings/"), allFiles[ii].getName()));
+				
+				//update allFiles to reflect file removal
+				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
+				ii = ii - 1;
+			}else if( cusips.size() == 0){
+				createFolders(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/");
+				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/"), allFiles[ii].getName()));
+				System.out.println("Dont think this is a bad file, " +f13F.getMatchType() + " " + allFiles[ii].getPath());
+				Runtime.getRuntime().exec("open "+ allFiles[ii].getCanonicalPath());
 
-	public int count(String filename) throws IOException {
-		InputStream is = new BufferedInputStream(new FileInputStream(filename));
-		byte[] c = new byte[1024];
-		int count = 0;
-		int readChars = 0;
-		while ((readChars = is.read(c)) != -1) {
-			for (int i = 0; i < readChars; ++i) {
-				if (c[i] == '\n')
-					++count;
-			}
+				//update allFiles to reflect file removal
+				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
+				ii = ii - 1;
+//				System.exit(1);
+		    }else{	
+		    	storeCusips(cusips);
+		    	allHoldings = combineTableEntries(allHoldings, newHoldings);
+		    	//TODO allHoldings should also keep track of which Funds have already been added
+		    	saveData(tempFolder+"allHoldings.data", allHoldings);
+		    	storeFundInDB(f13F.getFund(), quarterDir);
+		    }
+			
+			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
+			
 		}
-		return count;
-	}
+			
+			//System.out.println(f.getPath());
 
-	public boolean verifySmallFileSize(File f) throws IOException {
-		return count(f.getPath()) < 200;
+//			ArrayList<String> state = Grep.grep(f, null , "STATE:");
+//			TODO LOOK At state of incorporation
+			//get Fund name
+			//get ticker, CUSIPS, value, shares		
+		
+		getTopTwentyMostConcentrated();	
 	}
-
+	
+	public void storeFundInDB(Fund f, String quarter){
+		if(!f.isValidFund()){
+			System.err.println("Fund is not valid cannot store");
+			System.exit(1);
+		}
+		
+		DB database = new DB();
+		database.createConnection();
+		database.insertHedgeFund(f.getCIK(), f.getFundName());
+		double value;
+		double shares;
+		for(String cusip: f.getHoldings().keySet()){
+			value = f.getHoldings().get(cusip).getValue();
+			shares = f.getHoldings().get(cusip).getShares();
+			database.insertHedgeFundHoldings(cusip, f.getCIK(), value, shares, quarter);
+		}
+		database.shutdown();
+	}
+	
 	@SuppressWarnings("unchecked")
 	public Hashtable<String, Holding> combineTableEntries(
 			Hashtable<String, Holding> table1, Hashtable<String, Holding> table2) {
@@ -234,82 +391,6 @@ public class SECData {
 		return (long) (1000 * d);
 	}
 
-	@SuppressWarnings("unchecked")
-	public void formatSEC13Fs(String quarterDir) throws IOException, ClassNotFoundException{
-		File[] allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles();
-		File13F f13F;
-
-	//		for(File f : allFiles){
-		//761??? 1499
-		
-		Set<String> cusips;
-		
-		Hashtable<String, Holding> allHoldings = null;
-		
-		allHoldings = (Hashtable<String, Holding>) loadData(tempFolder+"allHoldings.data");		
-		if(allHoldings == null)
-			allHoldings = new Hashtable<String, Holding>();
-		
-		Integer index = 0;		
-		index = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
-		if(index == null)
-			index = 0;
-		
-		for(int ii = index+1; ii< allFiles.length; ii++){
-			System.out.println(allFiles[ii].getPath() + " " + ii);
-			f13F = new File13F(allFiles[ii]);
-//			f13F = new File13F(new File("filings/13Fs/2010/QTR1/data/0000022356-10-000028.txt"));
-			
-			Hashtable<String, Holding> newHoldings = f13F.getFund().getHoldings();
-			
-			//TODO save fund and holdings
-			
-			cusips = newHoldings.keySet();
-			System.out.println(cusips.size()); //cusips.iterator().next()));
-			System.out.println(f13F.getMatchType());
-			
-			
-			
-			if(cusips.size() == 0 && verifySmallFileSize(allFiles[ii])){
-				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
-				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"NoHoldings/"), allFiles[ii].getName()));
-				
-				//update allFiles to reflect file removal
-				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
-				ii = ii - 1;
-			}else if( cusips.size() == 0){
-				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
-				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/"), allFiles[ii].getName()));
-				System.out.println("Dont think this is a bad file, " +f13F.getMatchType() + " " + allFiles[ii].getPath());
-				
-				//update allFiles to reflect file removal
-				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
-				ii = ii - 1;
-				System.exit(1);
-		    }else{	
-		    	storeCusips(cusips);
-		    	allHoldings = combineTableEntries(allHoldings, newHoldings);
-		    	//TODO allHoldings should also keep track of which Funds have already been added
-		    	saveData(tempFolder+"allHoldings.data", allHoldings);
-		    }
-			
-			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
-		}
-			
-			//System.out.println(f.getPath());
-
-//			ArrayList<String> state = Grep.grep(f, null , "STATE:");
-//			TODO LOOK At state of incorporation
-			//get Fund name
-			//get ticker, CUSIPS, value, shares
-		
-
-		
-		
-		getTopTwentyMostConcentrated();
-		
-		
-	}
 	
 	@SuppressWarnings("unchecked")
 	public ArrayList<String> getTopTwentyMostConcentrated() throws IOException, ClassNotFoundException{
@@ -352,6 +433,20 @@ public class SECData {
 		return mostConcentrated;
 	}
 		
+
+	public Hashtable<String, Double> getSharesOuststanding(Set<String> tickers){
+		Hashtable<String,Double> tickersToShares = new Hashtable<String, Double>();
+		
+		double shares;
+		for(String tick: tickers){
+			shares = getSharesOutstanding(tick);
+			tickersToShares.put(tick, shares);
+			System.out.println(tick + " " +  shares);
+		}
+		
+		return tickersToShares;
+	}
+	
 	@SuppressWarnings("unchecked")
 	private double getSharesOutstanding(String ticker){
 		
@@ -463,19 +558,7 @@ public class SECData {
 		return "";
 	}
 	
-
-	public Hashtable<String, Double> getSharesOuststanding(Set<String> tickers){
-		Hashtable<String,Double> tickersToShares = new Hashtable<String, Double>();
-		
-		double shares;
-		for(String tick: tickers){
-			shares = getSharesOutstanding(tick);
-			tickersToShares.put(tick, shares);
-		}
-		
-		return tickersToShares;
-	}
-
+ 
 	
 	
 	@SuppressWarnings("unchecked")
@@ -509,6 +592,7 @@ public class SECData {
 		System.out.println("Number stored cusip " + cusipTicker.size());
 		System.out.println("Number stored badCusip " + badCusipTicker.size());
 		//TODO had a check to see if there are a lot of badCusips
+		
 		String tick;
 		for(String c: cusips){
 			//System.out.println(c + " " + newHoldings.get(c));
@@ -516,7 +600,6 @@ public class SECData {
 				tick = getTicker(c);
 				System.out.println(tick+" Cusip:"+c);
 				if(!tick.equals("")){
-//					System.out.println(tick);
 					cusipTicker.put(c, tick);
 				}else
 					badCusipTicker.put(c, tick);
@@ -571,23 +654,32 @@ public class SECData {
 
 	}
 	
-	/*
-	 * private static int getRecent13FQuarter(){ //Get Time Calendar time = new
-	 * GregorianCalendar(); return get13FQuarter(time.getTime()); }
-	 * 
-	 * private static int get13FQuarter(Date time){ //1st Quarter: October 1,
-	 * 2010 - December 31, 2010 //2nd Quarter: January 1, 2011 - March 31, 2011
-	 * //3rd Quarter: April 1, 2011 - June 30, 2011 //4th Quarter: July 1, 2011
-	 * - September 30, 2011 Calendar day = new GregorianCalendar();
-	 * day.setTime(time);
-	 * 
-	 * 
-	 * if(day.MONTH < Calendar.MARCH) return 1; else if(day.MONTH <
-	 * Calendar.JUNE) return 2; else if(day.MONTH < Calendar.SEPTEMBER) return
-	 * 3; else return 4;
-	 * 
-	 * }
-	 * 
+	private static void printStatementError(String statement) {
+		System.err.println(statement);
+		System.exit(1);
+	}
+	
+	
+	
+	public static String getCurrent13FQuarter(){ 
+		String r;
+		Calendar cal = Calendar.getInstance();
+		int year = cal.get(Calendar.YEAR);
+		int month = cal.get(Calendar.MONTH);
+		  //Get Time 
+		  if(month < Calendar.MARCH) 
+			   r = (year-1) + "/QTR" + 4+ "/"; 
+		  else if(month  <Calendar.JUNE) 
+			  r = year + "/QTR" + 1 + "/"; 
+		  else if(month < Calendar.SEPTEMBER) 
+			  r =  year + "/QTR" + 2 + "/";
+		  else r = year + "/QTR" + 3 + "/"; 
+		  
+		  return r;
+	  }
+	  
+	  
+	 /* 
 	 * private static int getNum13FsOnline(int quarter){
 	 * 
 	 * }
