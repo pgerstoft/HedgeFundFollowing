@@ -2,7 +2,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -41,8 +40,9 @@ public class File13F {
 		}
 		fund13F = new Fund();
 		matchType = "";
-		setCompanyName();
+		setFundName();
 		setFundCIK();
+		setQuarter();
 		try {
 			numLines = countNumLines(f13F.getPath());
 			initFund();
@@ -57,7 +57,8 @@ public class File13F {
 		}
 	}
 	
-	private void setCompanyName(){
+
+	private void setFundName(){
 		String name = null;
 		ArrayList<String> matchingVals;
 		try {
@@ -73,22 +74,6 @@ public class File13F {
 		}
 
 		fund13F.setFundName(name.trim());
-	}
-	
-	public String getCompanyName(){
-		return fund13F.getFundName();
-	}
-	
-	public Fund getFund(){
-		return fund13F;
-	}
-	
-	public String getMatchType(){
-		return matchType;
-	}
-	
-	public int getNumClaimedHoldings(){
-		return numClaimedHoldings;
 	}
 	
 	private void setFundCIK(){
@@ -108,7 +93,39 @@ public class File13F {
 
 		fund13F.setCIK(name.trim());
 	}
+
+	private void setQuarter(){
+		String name = null;
+		ArrayList<String> matchingVals;
+		try {
+			matchingVals = Grep.grep(f13F, null,"FILED AS OF DATE:");
+			name = matchingVals.get(0).split(":")[1];
+			if(name == null){
+				System.err.println(f13F.getPath());
+				System.exit(1);
+			}
+			
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		fund13F.setQuarter(name.trim());
+	}
 	
+	public Fund getFund(){
+		return fund13F;
+	}
+	
+	public String getMatchType(){
+		return matchType;
+	}
+	
+	public int getNumClaimedHoldings(){
+		return numClaimedHoldings;
+	}
+	
+	
+	//FUTURE!
 	public static boolean isValueBeforePrice(File f) throws IOException{
 		String line;
         StringBuffer buffer = new StringBuffer();
@@ -167,8 +184,10 @@ public class File13F {
         //FORMAT file
         wholeFile = wholeFile.replace( '$', ' '); //Needed to get rid of $ in front of value
         wholeFile = wholeFile.replaceAll("-", ""); //Needed to get rid of - between cusips
-        wholeFile = wholeFile.replaceAll( "\"", " ");
-        wholeFile = wholeFile.replaceAll( "=", " ");
+        wholeFile = wholeFile.replaceAll("\"", " ");
+        wholeFile = wholeFile.replaceAll("=", " ");
+        wholeFile = wholeFile.replaceAll("\\(","");
+        wholeFile = wholeFile.replaceAll("\\)", "");
 
         setNumClaimedHoldings(wholeFile);
 
@@ -193,7 +212,6 @@ public class File13F {
 		System.out.println("Number of matched lines: " + getNumLinesMatched(bestMatch) + " Number unique: " +bestMatch.size());
 		System.out.println(matchType);
 		
-		
 		//numClaimedHoldings must be less than or equal to the number of lines (consider one line per holding and heading)
 		if(numClaimedHoldings > 0 && !matchedHoldingsCloseToClaimed(wholeFile, getNumLinesMatched(bestMatch))){
 			System.err.println("This file's number of matches doesnt match number of claimed holdings: " + f13F.getPath() +"\nNumber of found: "+ getNumLinesMatched(bestMatch)+" Number Claimed in File:"+ numClaimedHoldings);
@@ -204,6 +222,7 @@ public class File13F {
 		}
 		addToHoldingsFromMatches(bestMatch);
 	}
+	
 	
 	private int getNumLinesMatched(ArrayList<String> bestMatch){
 		int numLines = 0;
@@ -371,8 +390,8 @@ public class File13F {
 			}
 
 			if (matchType.contains("Name Ticker Cusip Switched")) {
-				valueTemp = tempToken.nextToken();
-				valueTemp = tempToken.nextToken();
+				while (!isStringNumber(valueTemp))
+					valueTemp = tempToken.nextToken();
 			}
 						
 			if (tempToken.hasMoreTokens()) {
@@ -411,8 +430,20 @@ public class File13F {
 			}
 			
 			valueTempDouble += new Double(removeLettersFromEnd(valueTemp));
-			sharesTempDouble += new Double(removeLettersFromEnd(sharesTemp));
 
+			try{
+			sharesTempDouble += new Double(removeLettersFromEnd(sharesTemp));
+			}catch(Exception e ){
+				if(e.toString().contains("multiple")){
+					System.out.println(removeLettersFromEnd(sharesTemp).split("\\.")[0]);
+					sharesTemp = removeLettersFromEnd(sharesTemp).split("\\.")[0]+removeLettersFromEnd(sharesTemp).split("\\.")[1].substring(0, 2);
+					
+					sharesTempDouble += new Double(sharesTemp);
+				}else{
+					e.printStackTrace();
+					System.exit(1);
+				}
+			}
 			if (matchType.contains("Additional Value Shares on Separate Lines")) {
 				String[] newLineSplit = newline.split("\n");
 				StringTokenizer temp;
@@ -565,9 +596,9 @@ public class File13F {
 	private static final String LETTERS_AND_DIGITS = "[0-9A-Za-z]";
 	private static final String LETTERS = "[A-Za-z]";
 	private static final String NAME = "[A-Za-z. ]+"; //. is needed for INC.
-	private static final String SPACE = "[\t\n$,= ]+"; //space with newline
-	private static final String SPACE_STAR = "[\t\n$,= ]*";
-	private static final String SPACE_WON = "[\t$,= ]+"; //space without newline
+	private static final String SPACE = "[|\t\n$,= ]+"; //space with newline
+	private static final String SPACE_STAR = "[|\t\n$,= ]*";
+	private static final String SPACE_WON = "[|\t$,= ]+"; //space without newline
 	private static final String NUMBER = "[0-9,.]+";
 	private static final String SOMETHING_TIL_NEWLINE = "[^\n]+";
 	private static final String NEWLINE = "\n";
@@ -748,8 +779,6 @@ public class File13F {
 			bestMatch = bestMatchTemp;
 			matchType = "Default with Mashed Eight Digit Cusip ";
 		}
-		
-		
 		
 		//FOR ONE where cusip and value are meshed call a new one with cusip of length 8 and 9 
 		//then return the largest of the two

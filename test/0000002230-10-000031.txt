@@ -1,0 +1,232 @@
+-----BEGIN PRIVACY-ENHANCED MESSAGE-----
+Proc-Type: 2001,MIC-CLEAR
+Originator-Name: webmaster@www.sec.gov
+Originator-Key-Asymmetric:
+ MFgwCgYEVQgBAQICAf8DSgAwRwJAW2sNKK9AVtBzYZmr6aGjlWyK3XmZv3dTINen
+ TWSM7vrzLADbmYQaionwg5sDW3P6oaM5D3tdezXMm7z1T+B+twIDAQAB
+MIC-Info: RSA-MD5,RSA,
+ RIIqLjWWQJjW/M6ZDNtWZsBzz0uuvoK8bYk+3/C7VHVrWj34h2asWQcFlyFyi0y4
+ 6MwkdO6+90JJ+vK4fBMRiA==
+
+<SEC-DOCUMENT>0000002230-10-000031.txt : 20100216
+<SEC-HEADER>0000002230-10-000031.hdr.sgml : 20100215
+<ACCEPTANCE-DATETIME>20100216150652
+ACCESSION NUMBER:		0000002230-10-000031
+CONFORMED SUBMISSION TYPE:	13F-HR
+PUBLIC DOCUMENT COUNT:		1
+CONFORMED PERIOD OF REPORT:	20091231
+FILED AS OF DATE:		20100216
+DATE AS OF CHANGE:		20100216
+EFFECTIVENESS DATE:		20100216
+
+FILER:
+
+	COMPANY DATA:	
+		COMPANY CONFORMED NAME:			ADAMS EXPRESS CO
+		CENTRAL INDEX KEY:			0000002230
+		IRS NUMBER:				134912740
+		STATE OF INCORPORATION:			MD
+		FISCAL YEAR END:			1231
+
+	FILING VALUES:
+		FORM TYPE:		13F-HR
+		SEC ACT:		1934 Act
+		SEC FILE NUMBER:	028-00597
+		FILM NUMBER:		10606800
+
+	BUSINESS ADDRESS:	
+		STREET 1:		SEVEN ST PAUL ST STE 1140
+		CITY:			BALTIMORE
+		STATE:			MD
+		ZIP:			21202
+		BUSINESS PHONE:		4107525900
+
+	MAIL ADDRESS:	
+		STREET 1:		7 ST PAUL STREET SUITE 1140
+		CITY:			BALTIMORE
+		STATE:			MD
+		ZIP:			21202
+</SEC-HEADER>
+<DOCUMENT>
+<TYPE>13F-HR
+<SEQUENCE>1
+<FILENAME>adx13fdec09.txt
+<TEXT>
+                     UNITED STATES
+         SECURITIES & EXCHANGE COMMISSION
+              Washington, D.C. 20549
+
+                        Form 13F
+
+                  Form 13F COVER PAGE
+
+  Report for the Calendar Year or Quarter Ended  December 31, 2009
+
+  Check here if Amendment [       ];    Amendment Number:
+
+  This amendment (Check only one) :  [     ] is a restatement
+  [       ] adds new holdings entries.
+
+  Institutional Investment Manager Filing this Report:
+
+  Name:        The Adams Express Company
+  Address:     7 St. Paul Street, Suite 1140
+               Baltimore, MD  21202
+
+  Form 13F File Number:   28-597
+
+
+  The institutional investment manager filing this report and the
+  person by whom it is signed hereby represent that the person signing
+  the report is authorized to submit it, that all information contained
+  herein is true, correct and complete, and that it is understood that
+  all requried items, statements, schedules, lists, and tables, are
+  considered integral parts of this form.
+
+
+  Person Signing this Report on Behalf of Reporting Manager:
+
+
+
+  Name:      Christine M. Sloan
+  Title:     Assistant Treasurer
+  Phone:     (410) 752-5900
+
+  Signature, Place, and Date of Signing:
+
+  /s/ Christine M. Sloan       Baltimore, MD          February 16, 2010
+
+   [Signature]             [City, State]             [Date]
+
+
+
+  Report Type (Check only one.):
+
+  [X]   13F HOLDINGS REPORT.  (Check here if all holdings of this
+        reporting manager are reported in this report).
+
+  [ ]   13F NOTICE. (Check here if no holdings reported are in this
+        report, and all holdings are reported by other reporting manager(s).)
+
+
+  [ ]   13F COMBINATION REPORT. (Check here if a portion of the holdings for
+        this reporting manager are reported in this report and a protion are
+        reported by other reporting manager(s).)
+
+
+
+                           Form 13F SUMMARY PAGE
+
+  Report Summary:
+
+  Number of Other Included Managers:      0
+
+  Form 13F Information Table Entry Total: 77
+
+  Form 13F Information Table Value Total: $996,944
+                                          (in thousands)
+
+  List of Other Included Managers:
+
+  Provide a numbered list of the name(s) and Form 13F file number(s) of all
+  institutional investment managers with respect to which this report is filed,
+  other than the manager filing this report.
+
+  NONE
+
+
+
+
+  <Page>
+  <TABLE>
+  <CAPTION>
+
+    COLUMN 1           COLUMN 2          COLUMN 3    COLUMN 4        COLUMN 5     COLUMN 6 COLUMN 7 COLUMN 8
+    NAME OF ISSUER     TITLE OF CLASS    CUSIP       VALUE IN   SHARES/  SH/ PUT/ INV      OTHER    VOTING
+                                                       000's    PRN AMT  PRN CALL DISCRETN MANAGER  AUTHORITY
+                                                                                                   SOLE SHARED NONE
+  <S>
+  <C>                   <C>              <C>        <C>       <C>       <C> <C>   <C>      <C>    >C>    <C>    <C>
+  ABBOTT LABORATORIES     COM             002824100  17,277    320,000  SH        SOLE             320,000
+  APPLE INC.              COM             037833100  15,815     75,000  SH        SOLE              75,000
+  AT&T CORP.              COM             00206R102  11,212    400,000  SH        SOLE             400,000
+  AUTOMATIC DATA PROCES   COM             053015103  12,846    300,000  SH        SOLE             300,000
+  AVON PRODUCTS, INC.     COM             054303102  10,225    324,600  SH        SOLE             324,600
+  BANK OF AMERICA CORP.   COM             060505104  17,093   1,135,000 SH        SOLE           1,135,000
+  BANK OF AMERICA CORP.   UNIT 99/99/9999 060505419  746        50,000  SH        SOLE              50,000
+  BANK OF NEW YORK MELL   COM             064058100  11,294    403,775  SH        SOLE             403,775
+  BRISTOL-MYERS SQUIBB    COM             110122108  4,016     159,061  SH        SOLE             159,061
+  BROADCOM CORP.          COM             111320107  12,580    400,000  SH        SOLE             400,000
+  BUNGE LTD.              COM             G16962105  10,213    160,000  SH        SOLE             160,000
+  CAPITAL ONE FINANCIAL   COM             14040H105  8,051     210,000  SH        SOLE             210,000
+  CHEVRON CORP.           COM             166764100  15,398    200,000  SH        SOLE             200,000
+  CINTAS CORP.            COM             172908105  7,815     300,000  SH        SOLE             300,000
+  CISCO SYSTEMS, INC.     COM             17275R102  20,349    850,000  SH        SOLE             850,000
+  CLIFFS NATURAL RESOURCESCOM             18683K101  1,217      26,400  SH        SOLE              26,400
+  COCA-COLA CO.           COM             191216100  14,250    250,000  SH        SOLE             250,000
+  CONOCOPHILLIPS          COM             20825C104  5,107     100,000  SH        SOLE             100,000
+  CONSOL ENERGY INC.      COM             20854P109  9,960     200,000  SH        SOLE             200,000
+  CURTISS-WRIGHT CORP.    COM             231561101  11,275    360,000  SH        SOLE             360,000
+  CVS/CAREMARK CORP.      COM             126650100  9,180     285,000  SH        SOLE             285,000
+  DEAN FOODS CO.          COM             242370104  7,667     425,000  SH        SOLE             425,000
+  DEL MONTE FOODS CO.     COM             24522P103  11,340   1,000,000 SH        SOLE           1,000,000
+  DELL INC.               COM             24702R101  4,093     285,000  SH        SOLE             285,000
+  EMERSON ELECTRIC CO.    COM             291011104  12,780    300,000  SH        SOLE             300,000
+  EXXON MOBIL CORP.       COM             30231G102  14,661    215,000  SH        SOLE             215,000
+  FREEPORT-MCMORAN COPP   COM             35671D857  8,832     110,000  SH        SOLE             110,000
+  GENERAL ELECTRIC CO.    COM             369604103  22,513   1,488,000 SH        SOLE           1,488,000
+  GILEAD SCIENCES INC.    COM             375558103  8,656     200,000  SH        SOLE             200,000
+  GOOGLE INC.             COM             38259P508  12,400     20,000  SH        SOLE              20,000
+  HALLIBURTON CO.         COM             406216101  9,027     300,000  SH        SOLE             300,000
+  HANSEN NATURAL CORP.    COM             411310105  9,984     260,000  SH        SOLE             260,000
+  HARSCO CORP.            COM             415864107  9,991     310,000  SH        SOLE             310,000
+  HOSPIRA INC.            COM             441060100  11,475    225,000  SH        SOLE             225,000
+  ILLINOIS TOOL WKS INC   COM             452308109  11,998    250,000  SH        SOLE             250,000
+  INTEL CORP.             COM             458140100  17,136    840,000  SH        SOLE             840,000
+  JOHNSON & JOHNSON       COM             478160104  16,425    255,000  SH        SOLE             255,000
+  JPMORGAN CHASE & CO.    COM             46625H100  18,752    450,000  SH        SOLE             450,000
+  LOWE'S COMPANIES, INC   COM             548661107  14,034    600,000  SH        SOLE             600,000
+  MASCO CORP.             COM             574599106  6,215     450,000  SH        SOLE             450,000
+  MCDONALD'S CORP.        COM             580135101  15,610    250,000  SH        SOLE             250,000
+  MDU RES GROUP INC.      COM             552690109  13,275    562,500  SH        SOLE             562,500
+  MEAD JOHNSON NUTRITION  COM CL A        582839106  5,130     117,383  SH        SOLE             117,383
+  MEDTRONIC, INC.         COM             585055106  15,393    350,000  SH        SOLE             350,000
+  MICROSOFT CORP.         COM             594918104  35,978   1,180,000 SH        SOLE           1,180,000
+  MORGAN STANLEY          COM             617446448  8,880     300,000  SH        SOLE             300,000
+  NEWELL RUBBERMAID INC   COM             651229106  6,004     400,000  SH        SOLE             400,000
+  NORTHEAST UTILITIES     COM             664397106  9,027     350,000  SH        SOLE             350,000
+  NORTHWEST NATURAL GAS   COM             667655104  9,008     200,000  SH        SOLE             200,000
+  ORACLE CORP.            COM             68389X105  26,994   1,100,000 SH        SOLE           1,100,000
+  OSHKOSH CORP.           COM             688239201  14,071    380,000  SH        SOLE             380,000
+  PEPSICO, INC.           COM             713448108  21,888    360,000  SH        SOLE             360,000
+  PETROLEUM & RESOURCES   COM             716549100  51,914   2,186,774 SH        SOLE           2,186,774
+  PFIZER INC              COM             717081103  18,465   1,015,125 SH        SOLE           1,015,125
+  PNC FINL SVCS GROUP     COM             693475105  14,253    270,000  SH        SOLE             270,000
+  POTASH CORP SASK INC    COM             73755L107  5,859      54,000  SH        SOLE              54,000
+  PROCTER & GAMBLE CO.    COM             742718109  19,098    315,000  SH        SOLE             315,000
+  PRUDENTIAL FINANCIAL    COM             744320102  15,426    310,000  SH        SOLE             310,000
+  QUALCOMM INC.           COM             747525103  11,565    250,000  SH        SOLE             250,000
+  RYLAND GROUP INC.       COM             783764103  6,767     343,500  SH        SOLE             343,500
+  SAFEWAY INC.            COM             786514208  8,303     390,000  SH        SOLE             390,000
+  SENOMYX, INC.           COM             81724Q107  4,842    1,284,400 SH        SOLE           1,284,400
+  SPECTRA ENERGY CORP.    COM             847560109  8,323     405,780  SH        SOLE             405,780
+  SPIRIT AEROSYSTEMS HLDG COM CL A        848574109  14,299    720,000  SH        SOLE             720,000
+  STATE STREET CORP.      COM             857477103  10,014    230,000  SH        SOLE             230,000
+  TARGET CORP.            COM             87612E106  15,478    320,000  SH        SOLE             320,000
+  TATA MTRS LTD.          SPON ADR        876568502  16,860   1,000,000 SH        SOLE           1,000,000
+  TEVA PHARMACEUTICAL INDSADR             881624209  18,539    330,000  SH        SOLE             330,000
+  TRANSOCEAN LTD.         REG SHS         H8817H100  13,248    160,000  SH        SOLE             160,000
+  UNILEVER PLC ADR        SPON ADR NEW    904767704  23,009    721,300  SH        SOLE             721,300
+  UNITED TECHNOLOGIES CORPCOM             913017109  20,823    300,000  SH        SOLE             300,000
+  UNITEDHEALTH GROUP IN   COM             91324P102  4,267     140,000  SH        SOLE             140,000
+  VISA INC.               COM CL A        92826C839  16,617    190,000  SH        SOLE             190,000
+  WALT DISNEY CO.         COM             254687106  15,480    480,000  SH        SOLE             480,000
+  WELLS FARGO & CO.       COM             949746101  11,471    425,000  SH        SOLE             425,000
+  WGL HOLDINGS INC.       COM             92924F106  8,002     238,600  SH        SOLE             238,600
+  ZIMMER HOLDINGS, INC.   COM             98956P102  8,866     150,000  SH        SOLE             150,000
+                                                     996,944
+  </TABLE>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>
+-----END PRIVACY-ENHANCED MESSAGE-----

@@ -47,14 +47,14 @@ public class SECData {
 	}
 
 	public int downloadCurrentSEC13Fs(boolean overRide) throws IOException, ClassNotFoundException{
-		return downloadSEC13Fs(getCurrent13FQuarter(), overRide);
+		return downloadAndStoreSEC13Fs(getCurrent13FQuarter(), overRide);
 	}
 	
-	public int downloadSEC13Fs(String quarterDir, boolean overRide) throws IOException, ClassNotFoundException {
+	public int downloadAndStoreSEC13Fs(String quarterDir, boolean overRide) throws IOException, ClassNotFoundException {
 		// check if the 13Fs have been downloaded
 		// by looking at the company.idx folder
 		
-		verifyQuarterDir(quarterDir);
+		isQuarterDirValid(quarterDir);
 		
 		if(!overRide){
 			getCompanyIdx(quarterDir); //DO THIS EVERYTIME?
@@ -66,10 +66,11 @@ public class SECData {
 		return 1;
 	}
 	
-	private static void verifyQuarterDir(String quarterDir){
+	private static boolean isQuarterDirValid(String quarterDir){
 		String[] fields = quarterDir.split("/");
 		Calendar cal = Calendar.getInstance();
 		int currentYear = cal.get(Calendar.YEAR);
+		
 		try{
 			if(fields.length != 2 || !fields[1].matches("QTR[1-4]")
 					|| (new Double(fields[0]) < 1990 || new Double(fields[0]) > currentYear)
@@ -81,7 +82,6 @@ public class SECData {
 		}
 		
 		int month = cal.get(Calendar.MONTH);
-		  //Get Time
 		int currentQuarter;
 		
 		  if(month < Calendar.MARCH) 
@@ -96,6 +96,8 @@ public class SECData {
 			  printStatementError("inputted quarter is in the future current quarter: " 
 					  + currentQuarter + " input: " +quarterDir);
 		  }
+		  
+		  return true;
 	}
 
 	private void resetnumFilesRead(){
@@ -109,7 +111,7 @@ public class SECData {
 	
 	//Downloads company.idx from the SEC for inputted quarter	
 	private void getCompanyIdx(String quarterDir) {
-		verifyQuarterDir(quarterDir);
+		isQuarterDirValid(quarterDir);
 		// "ftp.sec.gov anonymous pgerstoft@berkeley.edu edgar/full-index/2010/QTR1/company.idx compay.idx";
 		createFolders(sec13FsLocalDir + quarterDir);
 		String[] ftpCommand = { ftpSEC, ftpSECUser, ftpSECPassword,
@@ -120,7 +122,7 @@ public class SECData {
 
 	//Store all lines with 13F-HR in company.idx from the inputted quarter
 	private void createCompanyIdx13F(String quarterDir) {
-		verifyQuarterDir(quarterDir);
+		isQuarterDirValid(quarterDir);
 		String file2Read = "company.idx";
 		File compIdx = new File(sec13FsLocalDir + quarterDir + file2Read);
 		if(!compIdx.exists())
@@ -237,19 +239,15 @@ public class SECData {
 	}
 
 
-	@SuppressWarnings("unchecked")
-	public void formatSEC13Fs(String quarterDir) throws IOException, ClassNotFoundException{
+	private void formatSEC13Fs(String quarterDir) throws IOException, ClassNotFoundException{
 		
-		verifyQuarterDir(quarterDir);
+		isQuarterDirValid(quarterDir);
 		
 		File[] allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles();
 		File13F f13F;
-		Set<String> cusips;
-		
-		Hashtable<String, Holding> allHoldings = null;
-		allHoldings = (Hashtable<String, Holding>) loadData(tempFolder+"allHoldings.data");		
-		if(allHoldings == null)
-			allHoldings = new Hashtable<String, Holding>();
+		Set<String> cusips = new TreeSet<String>();
+//		DB.deleteTempTable();
+//		DB.createTempCusipTable();
 		
 		Integer numFilesRead = 0;		
 		numFilesRead = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
@@ -260,27 +258,29 @@ public class SECData {
 			printStatementError("No files for: "+ quarterDir);
 		}
 		
-		for(int ii = numFilesRead; ii< allFiles.length; ii++){
-			System.out.println(allFiles[ii].getPath() + " " + ii);
+		for(int ii = 0; ii< allFiles.length; ii++){
+			System.out.println(allFiles[ii].getPath() + " " + ii + " / " + allFiles.length);
 //			if(!File13F.isValueBeforePrice(allFiles[ii])){
 //				System.out.println("VALUE ERROR");
 //				Runtime.getRuntime().exec("open "+ allFiles[ii].getCanonicalPath());
 //				System.exit(1);
 //			}
 			f13F = new File13F(allFiles[ii]);
+			//0000950123-11-012552.txt
 			//f13F = new File13F(new File("filings/13Fs/2010/QTR1/data/0000950123-10-013284.txt"));
-//			System.out.println(f13F.getFund());
-//			System.exit(1);
 			Hashtable<String, Holding> newHoldings = f13F.getFund().getHoldings();
+						
+			cusips = newHoldings.keySet();	
+			//if is not current quarter
+			for(String c:cusips){
+				DB.insertTempCusipTable(c);
+			}
 			
-			//TODO save fund and holdings
 			
-			cusips = newHoldings.keySet();			
 			
 			if(cusips.size() == 0 && f13F.isFileSmall()){
 				createFolders(sec13FsLocalDir+quarterDir+"NoHoldings/");
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"NoHoldings/"), allFiles[ii].getName()));
-				
 				//update allFiles to reflect file removal
 				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
 				ii = ii - 1;
@@ -289,148 +289,56 @@ public class SECData {
 				allFiles[ii].renameTo(new File(new File(sec13FsLocalDir+quarterDir+"MaybeNoHoldings/"), allFiles[ii].getName()));
 				System.out.println("Dont think this is a bad file, " +f13F.getMatchType() + " " + allFiles[ii].getPath());
 				Runtime.getRuntime().exec("open "+ allFiles[ii].getCanonicalPath());
-
 				//update allFiles to reflect file removal
 				allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles(); 
 				ii = ii - 1;
-//				System.exit(1);
-		    }else{	
-		    	storeCusips(cusips);
-		    	allHoldings = combineTableEntries(allHoldings, newHoldings);
+		    }else{
+		    	//if is current holding quarter
+		    	//storeCusips(cusips, quarterDir);
 		    	//TODO allHoldings should also keep track of which Funds have already been added
-		    	saveData(tempFolder+"allHoldings.data", allHoldings);
-		    	storeFundInDB(f13F.getFund(), quarterDir);
+		    	storeFundInDB(f13F.getFund());
 		    }
 			
 			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
-			
 		}
-			
-			//System.out.println(f.getPath());
-
-//			ArrayList<String> state = Grep.grep(f, null , "STATE:");
-//			TODO LOOK At state of incorporation
-			//get Fund name
-			//get ticker, CUSIPS, value, shares		
-		
-		getTopTwentyMostConcentrated();	
+		System.out.println("DONE");
+		DB.writeTempVals();
 	}
 	
-	public void storeFundInDB(Fund f, String quarter){
+	private void storeFundInDB(Fund f){
 		if(!f.isValidFund()){
 			System.err.println("Fund is not valid cannot store");
 			System.exit(1);
 		}
 		
-		DB database = new DB();
-		database.createConnection();
+		ArrayList<String> cusips  = DB.getCusips(f.getQuarter());
+		
+		DB database = DB.getInstance();
 		database.insertHedgeFund(f.getCIK(), f.getFundName());
 		double value;
 		double shares;
 		for(String cusip: f.getHoldings().keySet()){
+			if(!cusips.contains(cusip))
+				continue;
 			value = f.getHoldings().get(cusip).getValue();
 			shares = f.getHoldings().get(cusip).getShares();
-			database.insertHedgeFundHoldings(cusip, f.getCIK(), value, shares, quarter);
+			database.insertHedgeFundHoldings(cusip, f.getCIK(), value, shares, f.getQuarter());
 		}
-		database.shutdown();
+	}
+
+	
+	private void storeCUSIPTickerInDB(String cusip, String tick, String quarter){
+		if(!File13F.isCusipValid(cusip) || !isQuarterDirValid(quarter)){
+			printStatementError("Inputs are no good");
+		}
+		
+		DB databaseDb = DB.getInstance();
+		databaseDb.insertCusipTicker(cusip, tick, quarter);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public Hashtable<String, Holding> combineTableEntries(
-			Hashtable<String, Holding> table1, Hashtable<String, Holding> table2) {
-		
-		Hashtable<String, String> cusipTicker = null;
-		Hashtable<String, Holding> newTable = new Hashtable<String, Holding>();
-
-		try {
-			cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		if (cusipTicker == null) {
-			printStatementError("CusipTicker is not stored!");
-		}
-
-		TreeSet<String> keys = new TreeSet<String>();
-		keys.addAll(table1.keySet());
-		keys.addAll(table2.keySet());
-
-		for (String key : keys) {
-			if(cusipTicker.containsKey(key)){
-				if (table1.containsKey(key) && table2.containsKey(key)) {
-					Holding old = table1.get(key);
-					old.addToHolding(table2.get(key));
-					newTable.put(key, old);
-				} else if(table1.containsKey(key)){
-					newTable.put(key, table1.get(key));
-				} else if(table2.containsKey(key)){
-					newTable.put(key, table2.get(key));
-				} else 
-					printStatementError("Neither Tables Contain Key - Fix IT!");
-				
-			}
-		}
-		System.out.println("Table Size "+ newTable.size());
-		return newTable;
-	}
-
-	public Hashtable<Holding, String> switchMapping(
-			Hashtable<String, Holding> table) {
-		Hashtable<Holding, String> newTable = new Hashtable<Holding, String>();
-
-		for (String key : table.keySet())
-			newTable.put(table.get(key), key);
-
-		return newTable;
-	}
 
 	private long convertSecondToMillis(double d) {
 		return (long) (1000 * d);
-	}
-
-	
-	@SuppressWarnings("unchecked")
-	public ArrayList<String> getTopTwentyMostConcentrated() throws IOException, ClassNotFoundException{
-		ArrayList<String> mostConcentrated = new ArrayList<String>();
-		Hashtable<String, Holding> allHoldings = (Hashtable<String, Holding>) loadData(tempFolder+"allHoldings.data");
-		Hashtable<String, Holding> allHoldingsConcentrated = new Hashtable<String, Holding>();
-		Hashtable<String, String> cusipTicker = null;
-		
-		cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
-		if(cusipTicker == null)
-			cusipTicker = new Hashtable<String, String>();
-		//getSharesOustanding for each ticker
-		//getSharesOustanding(cusipTicker)
-		//divide allHoldings by sharesOustanding
-
-		for(String c: allHoldings.keySet()){
-			if(!cusipTicker.contains(c))
-				printStatementError("WHY IS " + c + " in holdings!");
-		}
-		
-		getSharesOuststanding(cusipTicker.keySet());
-		
-		Double shares;
-		for(String ticker: allHoldings.keySet()){
-			shares = getSharesOutstanding(ticker);
-			Holding concetrationHolding = allHoldings.get(ticker);
-			concetrationHolding.setShares(allHoldings.get(ticker).getShares()/shares);
-			allHoldingsConcentrated.put(ticker, concetrationHolding);
-		}
-		
-		Hashtable<Holding, String> holdingToString = switchMapping(allHoldingsConcentrated);
-		TreeSet<Holding> holdingToStringKeys = new TreeSet<Holding>(holdingToString.keySet());
-		Holding val;
-		for(int i= 1; i< holdingToStringKeys.size(); i++){
-			val = holdingToStringKeys.pollLast();
-			System.out.println(val + " " + holdingToString.get(val));
-			mostConcentrated.add(holdingToString.get(val));
-		}		
-		
-		return mostConcentrated;
 	}
 		
 
@@ -562,17 +470,14 @@ public class SECData {
 	
 	
 	@SuppressWarnings("unchecked")
-	private void storeCusips(Set<String> cusips){
+	private void storeCusips(Set<String> cusips, String quarterDir){
 		
-		Hashtable<String, String> cusipTicker = null;
 		Hashtable<String, String> badCusipTicker = null;
 		
 		try{
-			cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data");
 			badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data");
 		} catch (IOException e) {
 			try {
-				cusipTicker = (Hashtable<String, String>) loadData(tempFolder+"cusipTicker.data.temp");
 				badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data.temp");
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
@@ -584,38 +489,33 @@ public class SECData {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-		if(cusipTicker == null)
-			cusipTicker = new Hashtable<String, String>();
+
 		if(badCusipTicker == null)
 			badCusipTicker = new Hashtable<String, String>();
 		
-		System.out.println("Number stored cusip " + cusipTicker.size());
 		System.out.println("Number stored badCusip " + badCusipTicker.size());
 		//TODO had a check to see if there are a lot of badCusips
 		
 		String tick;
-		for(String c: cusips){
-			//System.out.println(c + " " + newHoldings.get(c));
-			if(!cusipTicker.containsKey(c) && !badCusipTicker.containsKey(c)){
-				tick = getTicker(c);
-				System.out.println(tick+" Cusip:"+c);
+		for(String cusip: cusips){
+			if(DB.getTickerFromCusip(cusip, quarterDir) == null && !badCusipTicker.containsKey(cusip)){
+				tick = getTicker(cusip);
+				System.out.println(tick+" Cusip:"+cusip);
 				if(!tick.equals("")){
-					cusipTicker.put(c, tick);
+					storeCUSIPTickerInDB(cusip, tick, quarterDir);
 				}else
-					badCusipTicker.put(c, tick);
+					badCusipTicker.put(cusip, tick);
 			}
 		}
 		
 		//save the data twice in case determination causes a EOFException
 		try {
-			saveData(tempFolder+"cusipTicker.data.temp", cusipTicker);
 			saveData(tempFolder+"badCusipTicker.data.temp", badCusipTicker);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		
 		try {
-			saveData(tempFolder+"cusipTicker.data", cusipTicker);
 			saveData(tempFolder+"badCusipTicker.data", badCusipTicker);
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -659,8 +559,6 @@ public class SECData {
 		System.exit(1);
 	}
 	
-	
-	
 	public static String getCurrent13FQuarter(){ 
 		String r;
 		Calendar cal = Calendar.getInstance();
@@ -678,14 +576,15 @@ public class SECData {
 		  return r;
 	  }
 	  
-	  
-	 /* 
-	 * private static int getNum13FsOnline(int quarter){
-	 * 
-	 * }
-	 * 
-	 * public static int getNum13FsStored(int quarter){
-	 * 
-	 * }
-	 */
+	public String getTickerFromWRDS(String quarter){
+		//Check if WRDS exists for that quarter
+		//return null if not
+		//Open file get ticker
+		return "";
+	}
+	
+	public double getSharesOutStandingFromWRDS(String ticker, String quarter){
+		return 0;
+	}
+
 }

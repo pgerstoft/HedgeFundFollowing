@@ -10,7 +10,11 @@ public class Stock implements java.io.Serializable{
 
 	private String cusip;
 	private String ticker;
+	private String sector;
+	
 	private double sharesOutstanding;
+	
+	
 	
 	public Stock getStock(String c){
 		String tick = getTicker(c);

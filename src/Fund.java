@@ -1,3 +1,4 @@
+import java.util.Calendar;
 import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.TreeSet;
@@ -9,20 +10,24 @@ public class Fund {
 	private Hashtable<Holding, LinkedList<String>> reverseHoldings;
 	private String fundName;
 	private String cik;
+	private String quarter;
 	private double fundValue;
 	
 	//TODO need a date
 	
 	public Fund(){
-		this(null, null);
+		this(null, null, null);
 	}
 	
-	public Fund(String fName, String fundCIK){
+	public Fund(String fName, String fundCIK, String quarter){
 		fundName = fName;
+		this.quarter = quarter;
+		cik = fundCIK;
 		holdings = new Hashtable<String, Holding>();
 		reverseHoldings = new Hashtable<Holding, LinkedList<String>>();
-		cik = fundCIK;
+		
 		fundValue = 0;
+		
 	}
 	
 	public String getFundName(){
@@ -41,6 +46,35 @@ public class Fund {
 		return cik;
 	}
 	
+	//input is 20110214, YEAR{4}Month{2}DAY{2}
+	public void setQuarter(String date){
+		this.quarter = formatToDirFormat(date);
+	}
+	
+	private String formatToDirFormat(String date) {
+		if (date.length() != 8) {
+			System.err.println("Date is not length 8");
+			System.exit(1);
+		}
+		String r;
+		int year = new Integer(date.substring(0, 4));
+		int month = new Integer(date.substring(4, 6));
+		if (month < Calendar.MARCH)
+			r = (year - 1) + "/QTR" + 4 + "/";
+		else if (month < Calendar.JUNE)
+			r = year + "/QTR" + 1 + "/";
+		else if (month < Calendar.SEPTEMBER)
+			r = year + "/QTR" + 2 + "/";
+		else
+			r = year + "/QTR" + 3 + "/";
+
+		return r;
+	}
+
+	public String getQuarter(){
+		return quarter;
+	}
+	
 	public void setCIK(String fundCIK){
 		if(fundCIK.length() != 10){
 			System.err.println("Inputted CIK is not ten digits.");
@@ -51,13 +85,24 @@ public class Fund {
 	
 	//return whether the fundName and cik are properly set.
 	public boolean isValidFund(){
-		if(cik.length() != 10 || fundName.isEmpty())
+		if(cik.length() != 10 || fundName.isEmpty() || quarter.isEmpty())
 			return false;
 		try{
 			Double.parseDouble(cik);
 		}catch (Exception e) {
 			return false;
 		}
+		
+		String[] fields = quarter.split("/");
+		Calendar cal = Calendar.getInstance();
+		int currentYear = cal.get(Calendar.YEAR);
+		if(fields.length != 2 || !fields[1].matches("QTR[1-4]")
+				|| (new Double(fields[0]) < 1990 || new Double(fields[0]) > currentYear)
+				|| !quarter.endsWith("/")){
+			System.err.println("inputted quarter does not follow format /Year/QRT{quarter number} "+ quarter);
+			System.exit(1);
+		}
+		
 		return true;
 	}	
 	

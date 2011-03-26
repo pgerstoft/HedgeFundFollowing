@@ -1,0 +1,288 @@
+-----BEGIN PRIVACY-ENHANCED MESSAGE-----
+Proc-Type: 2001,MIC-CLEAR
+Originator-Name: webmaster@www.sec.gov
+Originator-Key-Asymmetric:
+ MFgwCgYEVQgBAQICAf8DSgAwRwJAW2sNKK9AVtBzYZmr6aGjlWyK3XmZv3dTINen
+ TWSM7vrzLADbmYQaionwg5sDW3P6oaM5D3tdezXMm7z1T+B+twIDAQAB
+MIC-Info: RSA-MD5,RSA,
+ CMtK3Ngvug45RNuVjIuiCjif35nCmk4bX61TVKyyQdr6wOnhE5M+8YC3HQrQ35Ym
+ u6jhYAI9O3UgkIZ2/psrug==
+
+<SEC-DOCUMENT>0000872162-10-000002.txt : 20100122
+<SEC-HEADER>0000872162-10-000002.hdr.sgml : 20100122
+<ACCEPTANCE-DATETIME>20100122150122
+ACCESSION NUMBER:		0000872162-10-000002
+CONFORMED SUBMISSION TYPE:	13F-HR
+PUBLIC DOCUMENT COUNT:		1
+CONFORMED PERIOD OF REPORT:	20091231
+FILED AS OF DATE:		20100122
+DATE AS OF CHANGE:		20100122
+EFFECTIVENESS DATE:		20100122
+
+FILER:
+
+	COMPANY DATA:	
+		COMPANY CONFORMED NAME:			BLACKHILL CAPITAL INC
+		CENTRAL INDEX KEY:			0000872162
+		IRS NUMBER:				000000000
+		STATE OF INCORPORATION:			NJ
+
+	FILING VALUES:
+		FORM TYPE:		13F-HR
+		SEC ACT:		1934 Act
+		SEC FILE NUMBER:	028-02823
+		FILM NUMBER:		10541736
+
+	BUSINESS ADDRESS:	
+		STREET 1:		161 MADISON AVENUE
+		CITY:			MORRISTOWN
+		STATE:			NJ
+		ZIP:			07960
+		BUSINESS PHONE:		9739847014
+
+	MAIL ADDRESS:	
+		STREET 1:		161 MADISON AVENUE
+		CITY:			MORRISTOWN
+		STATE:			NJ
+		ZIP:			07960
+</SEC-HEADER>
+<DOCUMENT>
+<TYPE>13F-HR
+<SEQUENCE>1
+<FILENAME>form13f122009.txt
+<TEXT>
+UNITED STATES
+SECURITIES AND EXCHANGE COMMISSION
+Washington, D.C. 20549
+
+Form 13F
+
+FORM 13F COVER PAGE
+
+Report for the Calendar Year or Quarter Ended: 12/31/09
+
+Check here if Amendment [ ]; Amendment Number:
+This Amendment (Check only one.): [ ] is a restatement.
+          [ ] adds new holdings entries.
+
+Institutional Investment Manager Filing this Report:
+
+Name:     Blackhill Capital, Inc.
+Address: 161 Madison Avenue
+                Morristown, NJ  07960
+
+Form 13F File Number: 28-02823
+
+The institutional investment manager filing this report and the person by whom
+it is signed hereby represent that the person signing the report is authorized
+to submit it, that all information contained herein is true, correct and
+complete, and that it is understood that all required items, statements,
+schedules, lists, and tables, are considered integral parts of this form.
+
+Person Signing this Report on Behalf of Reporting Manager:
+
+Name: Cary M. Schwartz
+Title:    President
+Phone:  973-984-7014
+
+Signature, Place, and Date of Signing:
+
+Cary M. Schwartz, Morristown, New Jersey 1/22/10
+[Signature] [City, State] [Date]
+
+Report Type (Check only one.):
+[x] 13F HOLDINGS REPORT. (Check here if all holdings of this reporting manager
+are reported in this report.)
+[ ] 13F NOTICE. (Check here if no holdings reported are in this report, and all
+holdings are reported by other reporting manager(s).)
+[ ] 13F COMBINATION REPORT. (Check here if a portion of the holdings for this
+reporting manager are reported in this report and a portion are reported by
+other reporting manager(s).)
+
+List of Other Managers Reporting for this Manager:
+[If there are no entries in this list, omit this section.]
+
+Form 13F File Number Name
+28-02823   Blackhill Capital, Inc.
+[Repeat as necessary.]
+
+
+
+FORM 13F SUMMARY PAGE
+
+
+Report Summary:
+
+Number of Other Included Managers:  0
+
+Form 13F Information Table Entry Total: 69
+
+Form 13F Information Table Value Total: $311,075  (thousands)
+
+List of Other Included Managers:
+
+Provide a numbered list of the name(s) and Form 13F file number(s) of all
+institutional investment managers with respect to which this report is filed,
+other than the manager filing this report.
+
+[If there are no entries in this list, state ?NONE? and omit the column
+headings and list entries.]
+
+No. Form 13F File Number Name
+28-02823  Blackhill Capital, Inc.
+[Repeat as necessary.]
+
+
+<TABLE>  <C>  <C>  <C>
+
+                                                            Market
+Value                    Other   Voting
+Issuer                              Class       CUSIP       x 1000
+DiscretioQuantityManagersAuthority
+
+ABBOTT LABORATORIES CMN             COMMON      002824100
+7194.7074  Sole     133260  None   Sole
+ALTRIA GROUP, INC. CMN              COMMON      00209S103
+53.001  Sole       2700  None   Sole
+AMERICAN STATES WATER CO CMN        COMMON      29899101
+191.214  Sole       5400  None   Sole
+AQUA AMERICA INC CMN                COMMON      03836W103
+364.78528  Sole      20832  None   Sole
+BAXTER INTERNATIONAL INC CMN        COMMON      071813109
+3403.44  Sole      58000  None   Sole
+BERKSHIRE HATHAWAY INC. CLASS       COMMON      084670207
+305.598  Sole         93  None   Sole
+BOARDWALK PIPELINE PARTNERS LP      COMMON      096627104
+1681.68  Sole      56000  None   Sole
+BP P.L.C. SPONSORED ADR CMN         COMMON      055622104
+12336.016  Sole     212800  None   Sole
+BRISTOL-MYERS SQUIBB COMPANY C      COMMON      110122108
+5970.84225  Sole     236469  None   Sole
+BUCKEYE GP HOLDINGS L.P. CMN        COMMON      118167105
+400.96  Sole      14000  None   Sole
+BUCKEYE PARTNERS LP UNITS CMN       COMMON      118230101
+1932.975  Sole      35500  None   Sole
+CALIFORNIA WATER SERVICE GROUP      COMMON      130788102
+139.916  Sole       3800  None   Sole
+CATERPILLAR INC (DELAWARE) CMN      COMMON      149123101
+3419.9699  Sole      60010  None   Sole
+CELGENE CORPORATION CMN             COMMON      151020104
+222.72  Sole       4000  None   Sole
+CHEVRON CORPORATION CMN             COMMON      166764100
+1659.1345  Sole      21550  None   Sole
+CITIGROUP INC. CMN                  COMMON      172967101
+794.4  Sole     240000  None   Sole
+COACH INC CMN                       COMMON      189754104
+5855.759  Sole     160300  None   Sole
+COCA-COLA COMPANY (THE) CMN         COMMON      191216100
+1.14  Sole         20  None   Sole
+CONNECTICUT WATER SVC CMN           COMMON      207797101
+99.08  Sole       4000  None   Sole
+CONSOLIDATED EDISON INC CMN         COMMON      209115104
+11.49379  Sole        253  None   Sole
+COVIDIEN PLC CMN                    COMMON      G2552X108
+2025.747  Sole      42300  None   Sole
+DUNCAN ENERGY PARTNERS L.P. CM      COMMON      265026104
+665  Sole      28000  None   Sole
+EL PASO PIPELINE PARTNERS, L.P      COMMON      283702108
+1116.28  Sole      43000  None   Sole
+ELI LILLY & CO CMN                  COMMON      532457108
+8656.104  Sole     242400  None   Sole
+EMERSON ELECTRIC CO. CMN            COMMON      291011104
+255.6  Sole       6000  None   Sole
+ENBRIDGE ENERGY MGMT, LLC CMN       COMMON      29250X103
+1040.51456  Sole      19588  None   Sole
+ENBRIDGE ENERGY PARTNERS L P C      COMMON      29250R106
+1068.431  Sole      19900  None   Sole
+ENERGY TRANSFER PARTNERS, L.P.      COMMON      29273R109
+112.425  Sole       2500  None   Sole
+ENTERPRISE PRODUCTS PART L.P C      COMMON      293792107
+3105.28683  Sole      98863  None   Sole
+EXXON MOBIL CORPORATION CMN         COMMON      30231G10
+6819  Sole     100000  None   Sole
+GENERAL ELECTRIC CO CMN             COMMON      369604103
+6354.6  Sole     420000  None   Sole
+GOLDMAN SACHS GROUP, INC.(THE)      COMMON      38141G104
+33.768  Sole        200  None   Sole
+GOOGLE, INC. CMN CLASS A            COMMON      38259P508
+469.94484  Sole        758  None   Sole
+HARLEY-DAVIDSON INC CMN             COMMON      412822108
+0.756  Sole         30  None   Sole
+HOSPIRA, INC. CMN                   COMMON      441060100
+4370.19  Sole      85690  None   Sole
+JAMBA,INC. CMN                      COMMON      47023A101
+55.44  Sole      33000  None   Sole
+JOHNSON & JOHNSON CMN               COMMON      478160104
+11136.489  Sole     172900  None   Sole
+KIMBERLY CLARK CORP CMN             COMMON      494368103
+7033.584  Sole     110400  None   Sole
+KINDER MORGAN ENERGY PARTNERS,      COMMON      494550106
+6010.06684  Sole      98558  None   Sole
+KINDER MORGAN MANAGEMENT, LLC       COMMON      49455U100
+10342.8056  Sole     189290  None   Sole
+KRAFT FOODS INC. CMN CLASS A        COMMON      50075N104
+23.89122  Sole        879  None   Sole
+MAGELLAN MIDSTREAM PARTNERS LP      COMMON      559080106
+1845.858  Sole      42600  None   Sole
+MEAD JOHNSON NUTRITION COMPANY      COMMON      582839106
+7625.65  Sole     174500  None   Sole
+MEDCO HEALTH SOLUTIONS, INC. C      COMMON      58405U102
+16238.76408  Sole     254088  None   Sole
+MERCK & CO., INC. CMN               COMMON      58933Y105
+913.5  Sole      25000  None   Sole
+MIDDLESEX WATER CO CMN              COMMON      596680108
+117.45492  Sole       6666  None   Sole
+NIKE CLASS-B CMN CLASS B            COMMON      654106103
+2.6428  Sole         40  None   Sole
+NORFOLK SOUTHERN CORPORATION C      COMMON      655844108
+59.7588  Sole       1140  None   Sole
+ONEOK PARTNERS, L.P. LIMITED P      COMMON      68268N103
+1557.5  Sole      25000  None   Sole
+PEPSICO INC CMN                     COMMON      713448108
+158.08  Sole       2600  None   Sole
+PFIZER INC. CMN                     COMMON      717081103
+18244.57  Sole    1003000  None   Sole
+PHILIP MORRIS INTL INC CMN          COMMON      718172109
+6175.5485  Sole     128150  None   Sole
+PLAINS ALL AMERICAN PIPELINE L      COMMON      726503105
+1754.62  Sole      33200  None   Sole
+PROCTER & GAMBLE COMPANY (THE)      COMMON      742718109
+13880.45031  Sole     228937  None   Sole
+SCHLUMBERGER LTD CMN                COMMON      806857108
+195.27  Sole       3000  None   Sole
+SIGMA-ALDRICH CORPORATION CMN       COMMON      826552101
+6357.92625  Sole     125775  None   Sole
+STANDARD & POORS DEP RCPTS SPD      COMMON      78462F10
+239.596  Sole       2150  None   Sole
+STATE STREET CORPORATION (NEW)      COMMON      857477103
+365.736  Sole       8400  None   Sole
+STD & PRS 400 MID-CAP DEP RCPT      COMMON      59563510
+276.654  Sole       2100  None   Sole
+SUNOCO LOGISTICS PARTNERS LP C      COMMON      86786L108
+923.082  Sole      13800  None   Sole
+TARGA RESOURCES PARTNERS LP CM      COMMON      87611X105
+267.41  Sole      11000  None   Sole
+TC PIPELINES, L.P. CMN              COMMON      87233Q108
+4667.628  Sole     126700  None   Sole
+TOOTSIE ROLL & IND. CMN             COMMON      890516107
+0.76664  Sole         28  None   Sole
+TOOTSIE ROLL INDS INC CL-B CMN      COMMON      89051620
+21.1475  Sole        769  None   Sole
+WALT DISNEY COMPANY (THE) CMN       COMMON      254687106
+6129.435  Sole     190060  None   Sole
+WILLIAMS PARTNERS L. P. CMN         COMMON      96950F104
+825.023  Sole      26900  None   Sole
+WILLIAMS PIPELINE PARTNERS L.P      COMMON      96950K103
+395.08  Sole      16600  None   Sole
+WILLIAMS-SONOMA, INC. CMN           COMMON      969904101
+98386.77508  Sole    4734686  None   Sole
+ZIMMER HLDGS INC CMN                COMMON      98956P102
+6714.36401  Sole     113591  None   Sole
+
+
+311075.0469
+</TABLE>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>
+-----END PRIVACY-ENHANCED MESSAGE-----
