@@ -29,19 +29,20 @@ public class WRDSFileRead {
 			colNumCSHOQ = getColNumCSHOQ(line);
 			
 			String[] lineSplit;
-			String quarterDir;
+			Quarter quarterDir;
 			String sharesOutstanding;
-			
+			Cusip cusip;
 			while((line = in.readLine()) != null){
 				lineSplit = line.split(",");
 				System.out.println(line);
 				quarterDir = wrdsQTRFormatToqtrDirFormat(lineSplit[colNumDataFQTR]);
-				storeTickersCusips(lineSplit[colNumCusip], lineSplit[colNumTic], quarterDir);
+				cusip = new Cusip(lineSplit[colNumCusip]);
+				storeTickersCusips(cusip, lineSplit[colNumTic], quarterDir);
 				sharesOutstanding = lineSplit[colNumCSHOQ];
 				if(sharesOutstanding.isEmpty())
-					saveSharesOutstanding(lineSplit[colNumCusip], 0, quarterDir);
+					saveSharesOutstanding(cusip, 0, quarterDir);
 				else
-					saveSharesOutstanding(lineSplit[colNumCusip], new Double(sharesOutstanding), quarterDir);
+					saveSharesOutstanding(cusip, new Double(sharesOutstanding), quarterDir);
 			}
 			
 		}catch(Exception e){ e.printStackTrace();}
@@ -55,24 +56,27 @@ public class WRDSFileRead {
 	private int getColNum(String header, String var){
 		int wordCount = 0;
 		for(String word : header.split(",")){
-			if(word.equals(var))
+			if(word.equalsIgnoreCase(var))
 				break;
 			wordCount++;
 		}
 		return wordCount;
 	}
 	
-	private void storeTickersCusips(String cusip, String tick, String quarter){ 
+	private void storeTickersCusips(Cusip cusip, String tick, Quarter quarter){ 
 		database.insertCusipTicker(cusip, tick, quarter);
 	}
 	
-	public  void saveSharesOutstanding(String cusip, double sharesOutstanding, String quarter){
+	public  void saveSharesOutstanding(Cusip cusip, double sharesOutstanding, Quarter quarter){
 		database.insertTempSharesTable(cusip, sharesOutstanding, quarter);
 	}
 	
-	public static String wrdsQTRFormatToqtrDirFormat(String wrdsQTR){
+	public static Quarter wrdsQTRFormatToqtrDirFormat(String wrdsQTR){
 		//wrdsQTR looks like 2009Q1
 		//returns 2009/QTR1/
-		return wrdsQTR.replaceAll("([0-9]{4})Q([1-4])", "$1/QTR$2/");
+		int year = new Integer(wrdsQTR.substring(0, 4));
+		int quarter = new Integer(wrdsQTR.substring(5));
+		return new Quarter(year, quarter, true);
 	}
+
 }
