@@ -6,25 +6,23 @@ import java.util.TreeSet;
 
 public class Fund {
 
-	private Hashtable<String, Holding> holdings;
-	private Hashtable<Holding, LinkedList<String>> reverseHoldings;
+	private Hashtable<Cusip, Holding> holdings;
+	private Hashtable<Holding, LinkedList<Cusip>> reverseHoldings;
 	private String fundName;
 	private String cik;
-	private String quarter;
+	private Quarter quarter;
 	private double fundValue;
-	
-	//TODO need a date
-	
+		
 	public Fund(){
 		this(null, null, null);
 	}
 	
-	public Fund(String fName, String fundCIK, String quarter){
+	public Fund(String fName, String fundCIK, Quarter quarter){
 		fundName = fName;
 		this.quarter = quarter;
 		cik = fundCIK;
-		holdings = new Hashtable<String, Holding>();
-		reverseHoldings = new Hashtable<Holding, LinkedList<String>>();
+		holdings = new Hashtable<Cusip, Holding>();
+		reverseHoldings = new Hashtable<Holding, LinkedList<Cusip>>();
 		
 		fundValue = 0;
 		
@@ -46,46 +44,30 @@ public class Fund {
 		return cik;
 	}
 	
-	//input is 20110214, YEAR{4}Month{2}DAY{2}
-	public void setQuarter(String date){
-		this.quarter = formatToDirFormat(date);
-	}
-	
-	private String formatToDirFormat(String date) {
-		if (date.length() != 8) {
-			System.err.println("Date is not length 8");
-			System.exit(1);
-		}
-		String r;
-		int year = new Integer(date.substring(0, 4));
-		int month = new Integer(date.substring(4, 6));
-		if (month < Calendar.MARCH)
-			r = (year - 1) + "/QTR" + 4 + "/";
-		else if (month < Calendar.JUNE)
-			r = year + "/QTR" + 1 + "/";
-		else if (month < Calendar.SEPTEMBER)
-			r = year + "/QTR" + 2 + "/";
-		else
-			r = year + "/QTR" + 3 + "/";
-
-		return r;
-	}
-
-	public String getQuarter(){
-		return quarter;
-	}
-	
 	public void setCIK(String fundCIK){
-		if(fundCIK.length() != 10){
-			System.err.println("Inputted CIK is not ten digits.");
-			System.exit(1);
-		}
+		Lib.assertTrue(fundCIK.length() == 10);
 		this.cik = fundCIK;
 	}
 	
+	//input is 20110214, YEAR{4}Month{2}DAY{2}
+	public void setQuarter(String date){
+		Lib.assertTrue(date.length() == 8);
+		
+		int year = new Integer(date.substring(0, 4));
+		int month = new Integer(date.substring(4, 6)) - 1;
+		
+		quarter = new Quarter(year, month);
+
+	}
+
+	public Quarter getQuarter(){
+		return quarter;
+	}
+	
+
 	//return whether the fundName and cik are properly set.
 	public boolean isValidFund(){
-		if(cik.length() != 10 || fundName.isEmpty() || quarter.isEmpty())
+		if(cik.length() != 10 || fundName.isEmpty() || quarter == null)
 			return false;
 		try{
 			Double.parseDouble(cik);
@@ -93,32 +75,21 @@ public class Fund {
 			return false;
 		}
 		
-		String[] fields = quarter.split("/");
-		Calendar cal = Calendar.getInstance();
-		int currentYear = cal.get(Calendar.YEAR);
-		if(fields.length != 2 || !fields[1].matches("QTR[1-4]")
-				|| (new Double(fields[0]) < 1990 || new Double(fields[0]) > currentYear)
-				|| !quarter.endsWith("/")){
-			System.err.println("inputted quarter does not follow format /Year/QRT{quarter number} "+ quarter);
-			System.exit(1);
-		}
-		
 		return true;
 	}	
 	
-	public Hashtable<String, Holding> getHoldings(){
+	public Hashtable<Cusip, Holding> getHoldings(){
 		return holdings;
 	}
 	
-	public void addHoldings(String cusip, Holding newHolding){
-		if(!File13F.isCusipValid(cusip))
-			throw new IllegalArgumentException("Cusip is not valid");
-		LinkedList<String> newList = new LinkedList<String>();
+	public void addHoldings(Cusip cusip, Holding newHolding){
+		
+		LinkedList<Cusip> newList = new LinkedList<Cusip>();
 		if(holdings.containsKey(cusip)){
 			Holding oldHolding = holdings.get(cusip);
 			
 			//remove oldHolding from reverseHoldings
-			LinkedList<String> oldList = new LinkedList<String>();
+			LinkedList<Cusip> oldList = new LinkedList<Cusip>();
 			oldList = reverseHoldings.get(oldHolding);
 			oldList.remove(cusip);
 			reverseHoldings.put(oldHolding, newList);
@@ -169,7 +140,7 @@ public class Fund {
 		{
 			if( numHoldingsAddedToBuffer > n)
 				break;
-			for(String cusip: reverseHoldings.get(hold)){
+			for(Cusip cusip: reverseHoldings.get(hold)){
 				fundHoldings.append(numHoldingsAddedToBuffer + ": "+cusip + " " + hold+ "\n");
 				numHoldingsAddedToBuffer++;
 			}
@@ -178,5 +149,7 @@ public class Fund {
 		
 		return fundHoldings.toString();
 	}
+	
+	
 	
 }
