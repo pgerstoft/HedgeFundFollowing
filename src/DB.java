@@ -41,8 +41,8 @@ public class DB {
 	private static String stockPriceFields = "CUSIP char(9), "
 		+ "PRICE float, "
 		+ "RET float, "
-		+ "QUARTER char(10), "
-		+ "UNIQUE(CUSIP, QUARTER)";
+		+ "DATE char(10), "
+		+ "UNIQUE(CUSIP, DATE)";
 	
 	private static Hashtable<String, String> tableNameToFields = new Hashtable<String, String>();
 	// Keep track of whether or not the table exists
@@ -629,7 +629,7 @@ public class DB {
 		}
 	}
 
-	private Cusip getCusipFromTicker(String tick, Quarter quarter) {
+	public static Cusip getCusipFromTicker(String tick, Quarter quarter) {
 		Cusip cusip = null;
 		try {
 			stmt = conn.createStatement();
@@ -977,8 +977,92 @@ public class DB {
 		return x;
 	}
 	
-	public static void insertStockPriceReturn(Cusip cusip, double price, double ret, Quarter quarter){
-		insertValues(stockPrice, cusip + "'," + price + "," + ret +",'" + quarter);
+	public static void insertStockPriceReturn(Cusip cusip, double price, double ret, Date date){
+		insertValues(stockPrice, cusip + "'," + price + "," + ret +",'" + date);
 	}
+
+	public static int numFundsHolding(Cusip cusip, int numFundHoldingsMin, int numFundHoldingsMax, Quarter quarter) {
+		int numFundsHolding = 0;
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+		ResultSet results = stmt.executeQuery("SELECT count(*) AS NumHeldBy " +
+				"FROM  MYDB.HEDGEFUNDHOLDINGS H JOIN  " +
+				"MYDB.HEDGEFUND HF " +
+				"ON (H.CIK = HF.CIK AND H.QUARTER = HF.QUARTER) " +
+				"WHERE H.CUSIP = '"+ cusip  + "' " +
+				"AND H.QUARTER = '"+ quarter + "' " +
+				"AND NUMHOLDINGS >= "+ numFundHoldingsMin + " " +  
+				"AND NUMHOLDINGS <= "+ numFundHoldingsMax );
+
+		if(results.next())
+			numFundsHolding = results.getInt(1);
+		
+		Lib.assertTrue(!results.next());
+		closeConnection();
+
+	} catch (Exception e) {
+		handleException(e);
+	}
+	
+	
+	return numFundsHolding;
+	}
+
+	public static double numSharesHeld(Cusip cusip, int numFundHoldingsMin,
+			int numFundHoldingsMax, Quarter quarter) {
+		
+		double numFundsHolding = 0;
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+		ResultSet results = stmt.executeQuery("SELECT SUM(SHARES) AS NumHeldBy " +
+				"FROM  MYDB.HEDGEFUNDHOLDINGS H JOIN  " +
+				"MYDB.HEDGEFUND HF " +
+				"ON (H.CIK = HF.CIK AND H.QUARTER = HF.QUARTER) " +
+				"WHERE H.CUSIP = '"+ cusip  + "' " +
+				"AND H.QUARTER = '"+ quarter + "' " +
+				"AND NUMHOLDINGS >= "+ numFundHoldingsMin + " " +  
+				"AND NUMHOLDINGS <= "+ numFundHoldingsMax );
+
+		if(results.next())
+			numFundsHolding = results.getDouble(1);
+		
+		Lib.assertTrue(!results.next());
+		closeConnection();
+
+	} catch (Exception e) {
+		handleException(e);
+	}
+	
+	
+	return numFundsHolding;
+	}
+
+	public static Hashtable<Date, Double> getDateToReturn(Cusip cusip) {
+		Hashtable<Date, Double> dateToReturn = new  Hashtable<Date, Double>();
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+		ResultSet results = stmt.executeQuery("SELECT DATE, RET" +
+				"FROM " + stockPrice + " " +
+				"WHERE CUSIP = '"+ cusip  + "' ");
+
+		while(results.next()){
+			dateToReturn.put(new Date(results.getString(1)), results.getDouble(2));
+		}
+		
+		Lib.assertTrue(!results.next());
+		closeConnection();
+
+	} catch (Exception e) {
+		handleException(e);
+	}
+	
+	
+	return dateToReturn;
+	}
+	
+	
 	
 }

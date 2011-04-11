@@ -109,6 +109,8 @@ public class Script {
 		double sharePrice;
 		double percentChange;
 		int factor = 100000; 
+		int numFundHoldingsMin = 10;
+		int numFundHoldingsMax = 200;
 		ArrayList<Cusip> cusips = DB.getCusips(quarters[0]);
 		
 		out.write("Ticker, ");
@@ -119,13 +121,15 @@ public class Script {
 			
 		}
 	
-		
+		Hashtable<Quarter, Double> threeMonthReturns;
+		Hashtable<Quarter, Double> threeMonthSPYReturns = computeThreeMonthStockReturn(DB.getCusipFromTicker("SPY", new Quarter(2011, 1)));
 		for(Cusip cusip: cusips){
 			line = new StringBuffer();
 			for(CIK cik: ciks){
 				currentQuarter.put(cik, 0.0);
 			}
-		
+			threeMonthReturns = computeThreeMonthStockReturn(cusip);
+			
 			for(Quarter quarter: quarters){
 				ticker = DB.getTickerFromCusip(cusip, quarter);				
 				sharesOutstanding = DB.getSharesOustanding(cusip, quarter);
@@ -139,13 +143,12 @@ public class Script {
 				
 				line.append(ticker+ ", ");
 				line.append(quarter + ", ");
-				line.append(numHeldBy() + ", ");
-				line.append(concentration);
+
 				double fundConcentration = 0.0;
 				for(CIK cik: ciks){
-					if (fundToFundSize.get(cik)  != null)
+					if (fundToFundSize.get(cik)  != null){
 						fundConcentration = currentQuarter.get(cik) * DB.getFundValueDividedByShare(cusip, cik, quarter)  / fundToFundSize.get(cik);
-					else
+					}else
 						fundConcentration = 0.0;
 					line.append(fundConcentration + ", ");
 					line.append((currentQuarter.get(cik) / (sharesOutstanding * factor)) + ", ");
@@ -159,9 +162,14 @@ public class Script {
 //						line.append(percentChange + ", ");
 //					}else
 //						line.append("0, 0, ");
-					
-					
+										
 				}
+				
+				line.append(DB.numFundsHolding(cusip, numFundHoldingsMin, numFundHoldingsMax, quarter) + ", ");
+				line.append((DB.numSharesHeld(cusip, numFundHoldingsMin, numFundHoldingsMax, quarter)  / (sharesOutstanding * factor)) + ", ");
+				
+				line.append(threeMonthReturns.get(quarter) - threeMonthSPYReturns.get(quarter));
+				
 				System.out.println(cusip);
 				out.write(line.toString() + "\n");
 				
@@ -170,6 +178,41 @@ public class Script {
 		}
 		out.close();
 	}
+
+	private static Hashtable<Quarter, Double> computeThreeMonthStockReturn(
+			Cusip cusip) {
+		//At month end of the release of the 13F to three months forward 
+		//QTR1 return is return from feb to april
+		//sorted by date
+		Hashtable<Date, Double> dateToReturn = DB.getDateToReturn(cusip);
+		Quarter newQuarterOneMonthAhead = null;
+		Quarter quarterOneMonthAhead = null;
+		double threeMonthReturn = 0.0;
+		Hashtable<Quarter, Double> quarterToFutureReturn = new Hashtable<Quarter, Double>();
+		
+		for(Date d: dateToReturn.keySet()){
+			if(d.getMonth()<11)
+				newQuarterOneMonthAhead = new Quarter(d.getYear(), d.getMonth());
+			else
+				newQuarterOneMonthAhead = new Quarter(d.getYear()+1, d.getMonth()-12);
+			
+			if(!quarterOneMonthAhead.equals(newQuarterOneMonthAhead)){
+				if(quarterOneMonthAhead != null )
+					quarterToFutureReturn.put(quarterOneMonthAhead, threeMonthReturn);
+				quarterOneMonthAhead = newQuarterOneMonthAhead;
+			}
+			else if( quarterOneMonthAhead.equals(newQuarterOneMonthAhead))
+				threeMonthReturn = (threeMonthReturn+1)*(dateToReturn.get(d)+1) - 1;
+			else
+				Lib.assertNotReached();
+				
+			
+		}
+		
+		return quarterToFutureReturn;
+	}
+	
+	
 		//
 		//for every quarter
 		//	for every cusip

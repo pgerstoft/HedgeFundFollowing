@@ -85,11 +85,7 @@ public class File13F {
 	private void setFundQuarter(){
 		//input is 20110214, YEAR{4}Month{2}DAY{2}
 		String date = getValueAfter("FILED AS OF DATE:");
-		Lib.assertTrue(date.length() == 8);
-		int year = new Integer(date.substring(0, 4));
-		int month = new Integer(date.substring(4, 6)) - 1;
-		
-		fund13F.setQuarter(new Quarter(year, month));
+		fund13F.setQuarter(new Date(date).toQuarter());
 	}
 	
 	public Fund getFund(){
