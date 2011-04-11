@@ -8,10 +8,9 @@ import java.util.regex.Pattern;
 //TODO getSharesOutsanding and do Concentration
 //TODO Set up Stock
 //TODO Set up Financial Data
-//TODO check out if there are a lot of bad cusips and eight Digit
-//TODO Set up a system for storing vars, and writing variables twice
 //TODO check that you are connected to the internet!
-
+//TODO compute 13F one quarter return
+//TODO how do you stock split? 
 
 
 public class SECData {
@@ -33,7 +32,6 @@ public class SECData {
 	private SECData() {
 		createFolders(sec13FsLocalDir);
 		createFolders(tempFolder);
-		// TODO Verify that all files that should be downloaded are
 	}
 
 	public static SECData getInstance() {
@@ -47,14 +45,22 @@ public class SECData {
 	}
 
 	public int downloadCurrentSEC13Fs(boolean overRide) throws IOException, ClassNotFoundException{
-		return downloadAndStoreSEC13Fs(getCurrent13FQuarter(), overRide);
+		return downloadAndStoreSEC13Fs(getMostRecentFinishedQuarter(), overRide);
 	}
 	
-	public int downloadAndStoreSEC13Fs(String quarterDir, boolean overRide) throws IOException, ClassNotFoundException {
+	public static Quarter getMostRecentFinishedQuarter(){ 
+		Calendar cal = Calendar.getInstance();
+		int year = cal.get(Calendar.YEAR);
+		int month = cal.get(Calendar.MONTH);
+		return new Quarter(year, month).getPreviousQuarter();
+	  }
+	
+	
+	public int downloadAndStoreSEC13Fs(Quarter quarterDir, boolean overRide) throws IOException, ClassNotFoundException {
 		// check if the 13Fs have been downloaded
 		// by looking at the company.idx folder
 		
-		isQuarterDirValid(quarterDir);
+		Lib.assertTrue(isValidQuarter(quarterDir));
 		
 		if(!overRide){
 			getCompanyIdx(quarterDir); //DO THIS EVERYTIME?
@@ -62,43 +68,10 @@ public class SECData {
 			resetnumFilesRead();
 			get13FsFromSEC(quarterDir); 
 		}
-		formatSEC13Fs(quarterDir);
+		parseSEC13Fs(quarterDir);
 		return 1;
 	}
 	
-	private static boolean isQuarterDirValid(String quarterDir){
-		String[] fields = quarterDir.split("/");
-		Calendar cal = Calendar.getInstance();
-		int currentYear = cal.get(Calendar.YEAR);
-		
-		try{
-			if(fields.length != 2 || !fields[1].matches("QTR[1-4]")
-					|| (new Double(fields[0]) < 1990 || new Double(fields[0]) > currentYear)
-					|| !quarterDir.endsWith("/")){
-				printStatementError("inputted quarter does not follow format /Year/QRT{quarter number} "+ quarterDir);
-			}
-		}catch(Exception e){
-			printStatementError("inputted quarter does not follow format /Year/QRT{quarter number} "+ quarterDir);
-		}
-		
-		int month = cal.get(Calendar.MONTH);
-		int currentQuarter;
-		
-		  if(month < Calendar.MARCH) 
-			  currentQuarter = 4;
-		  else if(month  <Calendar.JUNE) 
-			  currentQuarter = 1; 
-		  else if(month < Calendar.SEPTEMBER) 
-			  currentQuarter =2;
-		  else currentQuarter = 3; 
-		  
-		  if(new Double(fields[0]) == currentYear &&  new Double(fields[1].substring(3))  > currentQuarter ){
-			  printStatementError("inputted quarter is in the future current quarter: " 
-					  + currentQuarter + " input: " +quarterDir);
-		  }
-		  
-		  return true;
-	}
 
 	private void resetnumFilesRead(){
 		try {
@@ -110,8 +83,9 @@ public class SECData {
 	}
 	
 	//Downloads company.idx from the SEC for inputted quarter	
-	private void getCompanyIdx(String quarterDir) {
-		isQuarterDirValid(quarterDir);
+	private void getCompanyIdx(Quarter quarterDir) {
+		Lib.assertTrue(isValidQuarter(quarterDir));
+		
 		// "ftp.sec.gov anonymous pgerstoft@berkeley.edu edgar/full-index/2010/QTR1/company.idx compay.idx";
 		createFolders(sec13FsLocalDir + quarterDir);
 		String[] ftpCommand = { ftpSEC, ftpSECUser, ftpSECPassword,
@@ -121,12 +95,13 @@ public class SECData {
 	}
 
 	//Store all lines with 13F-HR in company.idx from the inputted quarter
-	private void createCompanyIdx13F(String quarterDir) {
-		isQuarterDirValid(quarterDir);
+	private void createCompanyIdx13F(Quarter quarterDir) {
+		Lib.assertTrue(isValidQuarter(quarterDir));
+		
 		String file2Read = "company.idx";
 		File compIdx = new File(sec13FsLocalDir + quarterDir + file2Read);
-		if(!compIdx.exists())
-			printStatementError("Must download company.idx for: "+ quarterDir);
+		Lib.assertTrue(compIdx.exists(), "Must download company.idx for: "+ quarterDir);
+
 		File compIdx13F = new File(sec13FsLocalDir + quarterDir + file2Read
 				+ ".13F");
 
@@ -140,17 +115,13 @@ public class SECData {
 
 	
 	//downloads 13Fs from SEC
-	private void get13FsFromSEC(String quarterDir) {
+	private void get13FsFromSEC(Quarter quarterDir) {
 		
 		File companyIdx13FFile = new File(sec13FsLocalDir + quarterDir+ companyIdx13F);
-		if (!companyIdx13FFile.exists()){
-			printStatementError("Download " + companyIdx + " before getting 13Fs");
-		}
+		Lib.assertTrue(companyIdx13FFile.exists());
 			
 		ArrayList<String> filesRemote13F = get13FsFilesFromCompanyIdx(companyIdx13FFile);
-		if(filesRemote13F.size() == 0){
-			printStatementError("No 13Fs in CompanyIdx for quarter:" + quarterDir);
-		}
+		Lib.assertTrue(filesRemote13F.size() != 0);
 		
 		String localFilingDir = sec13FsLocalDir + quarterDir + sec13FsFilingDir;
 		
@@ -187,9 +158,7 @@ public class SECData {
 	private ArrayList<String> get13FsFilesFromCompanyIdx(
 			File companyIdx13FFile) {
 
-		if (!companyIdx13FFile.getPath().endsWith(companyIdx13F))
-			printStatementError("Bad Input: File path need to end with: "
-					+ companyIdx13F);
+		Lib.assertTrue(companyIdx13FFile.getPath().endsWith(companyIdx13F));
 
 		ArrayList<String> filesRemote13F = new ArrayList<String>();
 
@@ -215,11 +184,8 @@ public class SECData {
 						+ middleVal + "/" + noTxtNoDashes + "/"
 						+ forsplitting[forsplitting.length - 1];
 
-				if (!parentAndFile.endsWith(".txt"))
-					printStatementError("Needs to end with .txt"
-							+ parentAndFile);
+				Lib.assertTrue(parentAndFile.endsWith(".txt"));
 
-				// System.out.println(parentAndFile);
 				filesRemote13F.add(parentAndFile);
 			}
 		} catch (FileNotFoundException e) {
@@ -239,42 +205,39 @@ public class SECData {
 	}
 
 
-	private void formatSEC13Fs(String quarterDir) throws IOException, ClassNotFoundException{
+	private void parseSEC13Fs(Quarter quarterDir) throws IOException, ClassNotFoundException{
 		
-		isQuarterDirValid(quarterDir);
+		Lib.assertTrue(isValidQuarter(quarterDir));
 		
 		File[] allFiles = new File(sec13FsLocalDir + quarterDir + sec13FsFilingDir).listFiles();
-		File13F f13F;
-		Set<String> cusips = new TreeSet<String>();
+		File13F f13F = null;
+		Set<Cusip> cusips = new TreeSet<Cusip>();
+		
+		//For WRDS
 //		DB.deleteTempTable();
 //		DB.createTempCusipTable();
 		
-		Integer numFilesRead = 0;		
-		numFilesRead = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
-		if(numFilesRead == null)
+		Integer numFilesRead = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
+		if(numFilesRead == null || numFilesRead == allFiles.length)
 			numFilesRead = 0;
 		
-		if(allFiles == null || allFiles.length == 0){
-			printStatementError("No files for: "+ quarterDir);
-		}
+		Lib.assertTrue(allFiles == null || allFiles.length == 0, "No files for: "+ quarterDir);
 		
-		for(int ii = 0; ii< allFiles.length; ii++){
-			System.out.println(allFiles[ii].getPath() + " " + ii + " / " + allFiles.length);
-//			if(!File13F.isValueBeforePrice(allFiles[ii])){
-//				System.out.println("VALUE ERROR");
-//				Runtime.getRuntime().exec("open "+ allFiles[ii].getCanonicalPath());
-//				System.exit(1);
-//			}
-			f13F = new File13F(allFiles[ii]);
+		for(int ii = numFilesRead; ii< allFiles.length; ii++){
+			System.out.println(allFiles[ii].getPath() + " " + (ii + 1) + " / " + allFiles.length);
+			try{
+				f13F = new File13F(allFiles[ii]);
+			}catch(Exception e){ continue;}
 			//0000950123-11-012552.txt
-			//f13F = new File13F(new File("filings/13Fs/2010/QTR1/data/0000950123-10-013284.txt"));
-			Hashtable<String, Holding> newHoldings = f13F.getFund().getHoldings();
-						
+			//f13F = new File13F(new File("filings/13Fs/2009/QTR2/data/0000312069-09-000043.txt"));
+			Hashtable<Cusip, Holding> newHoldings = f13F.getFund().getHoldings();
+
 			cusips = newHoldings.keySet();	
-			//if is not current quarter
-			for(String c:cusips){
-				DB.insertTempCusipTable(c);
-			}
+			
+			//if is not current quarter, for wrds
+//			for(String c:cusips){
+//				DB.insertTempCusipTable(c);
+//			}
 			
 			
 			
@@ -296,28 +259,102 @@ public class SECData {
 		    	//if is current holding quarter
 		    	//storeCusips(cusips, quarterDir);
 		    	//TODO allHoldings should also keep track of which Funds have already been added
-		    	storeFundInDB(f13F.getFund());
+		    	storeFundInDB(f13F.getFund(), allFiles[ii].getPath());
 		    }
 			
 			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
 		}
+//		setStockPrices(quarterDir);
+		verifyDatabase(quarterDir);
+		DB.getInstance().updateNumHoldings(quarterDir);
 		System.out.println("DONE");
-		DB.writeTempVals();
+//		DB.writeTempVals();
 	}
 	
-	private void storeFundInDB(Fund f){
-		if(!f.isValidFund()){
-			System.err.println("Fund is not valid cannot store");
-			System.exit(1);
+//	private void setStockPrices(Quarter quarter){
+//		ArrayList<String> cusips = DB.getCusipsHeldByAtLeast(10, quarter);
+//		for(String cusip :  cusips){
+//			ArrayList<Double> prices = DB.getValueDividedByShares(cusip, quarter);
+//			
+//			DB.setStockPrice(cusip, quarter, prices.get(prices.size()/2)*1000);
+//		}
+//	}
+	
+	private void verifyDatabase(Quarter quarter) throws IOException{
+		//calculate price for all stocks
+		BufferedWriter out = new BufferedWriter(new FileWriter("BADCIKS.txt"));
+		ArrayList<String> ciks = DB.getCIKS(quarter);
+		ArrayList<Cusip> cusipsHeldByAtLeast10 = DB.getCusipsHeldByAtLeast(10, quarter);
+		Cusip matchedCusip = null;
+		double correctPrice;
+		double foundPrice;
+		double lowerBound = 1.0 - .2;
+		double upperBound = 1.0 + .2;
+		double valueMultiplier = 1000;
+		String file = "";
+		for(String cik :  ciks){
+			matchedCusip = null;
+			ArrayList<Cusip> cusipsForCik = DB.getCusipsHeldBy(cik, quarter);
+			for(Cusip c : cusipsForCik){
+				if(cusipsHeldByAtLeast10.contains(c)){
+					matchedCusip = c;
+					break;
+				}
+			}
+			if(matchedCusip ==  null)
+				continue;
+			
+			correctPrice = DB.getPrice(matchedCusip, quarter);
+			foundPrice = DB.getFundValueDividedByShare(matchedCusip, cik, quarter);
+			
+			if(upperBound*(correctPrice/valueMultiplier) > foundPrice && lowerBound*(correctPrice/valueMultiplier) < foundPrice)
+				continue;
+			
+			if(upperBound*correctPrice > foundPrice && lowerBound*correctPrice < foundPrice)
+				continue;
+			if(upperBound*(correctPrice/valueMultiplier) > foundPrice *valueMultiplier && lowerBound*(correctPrice/valueMultiplier) < foundPrice* valueMultiplier)
+				continue;
+//			System.out.println("CIK: " + cik + "  " + matchedCusip + " " + foundPrice + " correct: "+ correctPrice);
+//			System.exit(1);
+			file = DB.getFileName(cik, quarter);
+			DB.removeFund(cik, quarter);
+			
+			if(upperBound*correctPrice > 1/foundPrice && lowerBound*correctPrice < 1/foundPrice){
+				//file has value shares switched
+				storeFundInDB(new File13F(file, true).getFund(), file);
+				System.out.println("1: CIK: " + cik);
+				continue;
+			}
+			if(upperBound*(correctPrice/valueMultiplier) > (1/foundPrice) && lowerBound*(correctPrice/valueMultiplier) < 1/foundPrice){
+				//file has value shares switched
+				storeFundInDB(new File13F(file, true).getFund(), file);
+				System.out.println("2: CIK: " + cik);
+				continue;
+			}
+			if(upperBound*(correctPrice/valueMultiplier) > (1/foundPrice) * valueMultiplier && lowerBound*(correctPrice/valueMultiplier) < 1/foundPrice *valueMultiplier){
+				//file has value shares switched
+				storeFundInDB(new File13F(file, true).getFund(), file);
+				System.out.println("3: CIK: " + cik);
+				continue;
+			}
+//			System.out.println("BAD");
+			//Add to list of bad cusips move on
+			out.write(file + "\n");
 		}
 		
-		ArrayList<String> cusips  = DB.getCusips(f.getQuarter());
+		out.close();
+	}
+	
+	private void storeFundInDB(Fund f, String fileName){
+		Lib.assertTrue(f.isValidFund());
+		
+		ArrayList<Cusip> cusips  = DB.getCusips(f.getQuarter());
 		
 		DB database = DB.getInstance();
-		database.insertHedgeFund(f.getCIK(), f.getFundName());
+		database.insertHedgeFund(f.getCIK(), f.getFundName(), f.getQuarter(), fileName);
 		double value;
 		double shares;
-		for(String cusip: f.getHoldings().keySet()){
+		for(Cusip cusip: f.getHoldings().keySet()){
 			if(!cusips.contains(cusip))
 				continue;
 			value = f.getHoldings().get(cusip).getValue();
@@ -327,19 +364,14 @@ public class SECData {
 	}
 
 	
-	private void storeCUSIPTickerInDB(String cusip, String tick, String quarter){
-		if(!File13F.isCusipValid(cusip) || !isQuarterDirValid(quarter)){
-			printStatementError("Inputs are no good");
-		}
+	private void storeCUSIPTickerInDB(Cusip cusip, String tick, Quarter quarter){
+		Lib.assertTrue(isValidQuarter(quarter));
 		
 		DB databaseDb = DB.getInstance();
 		databaseDb.insertCusipTicker(cusip, tick, quarter);
 	}
-	
 
-	private long convertSecondToMillis(double d) {
-		return (long) (1000 * d);
-	}
+
 		
 
 	public Hashtable<String, Double> getSharesOuststanding(Set<String> tickers){
@@ -378,7 +410,7 @@ public class SECData {
 		try {
 			URL url = new URL("http://www.google.com/finance?fstype=bi&q="+ ticker);
 			try {
-				Thread.sleep(convertSecondToMillis(.25));
+				Thread.sleep(Lib.convertSecondToMillis(.25));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -422,11 +454,11 @@ public class SECData {
 			return shares;
 			
 		}
-		printStatementError("No match in Shares Outstanding");
+		Lib.assertNotReached("No match in Shares Outstanding");
 		return 0;
 	}
 	
-	private String getTicker(String cusip) {
+	private String getTicker(Cusip cusip) {
 
 		StringBuffer bf = new StringBuffer();
 		try {
@@ -434,7 +466,7 @@ public class SECData {
 					"http://activequote.fidelity.com/mmnet/SymLookup.phtml?QUOTE_TYPE=&scCode=E&searchBy=C&searchFor="
 							+ cusip);
 			try {
-				Thread.sleep(convertSecondToMillis(.25));
+				Thread.sleep(Lib.convertSecondToMillis(.25));
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
@@ -464,21 +496,18 @@ public class SECData {
 			return wholeFile.substring(mStart.end(), mEnd.end() - 1);
 		}
 		return "";
-	}
-	
- 
-	
+	}	
 	
 	@SuppressWarnings("unchecked")
-	private void storeCusips(Set<String> cusips, String quarterDir){
+	private void storeCusips(Set<Cusip> cusips, Quarter quarterDir){
 		
-		Hashtable<String, String> badCusipTicker = null;
+		Hashtable<Cusip, String> badCusipTicker = null;
 		
 		try{
-			badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data");
+			badCusipTicker = (Hashtable<Cusip, String>) loadData(tempFolder+"badCusipTicker.data");
 		} catch (IOException e) {
 			try {
-				badCusipTicker = (Hashtable<String, String>) loadData(tempFolder+"badCusipTicker.data.temp");
+				badCusipTicker = (Hashtable<Cusip, String>) loadData(tempFolder+"badCusipTicker.data.temp");
 			} catch (IOException e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -491,13 +520,13 @@ public class SECData {
 		}
 
 		if(badCusipTicker == null)
-			badCusipTicker = new Hashtable<String, String>();
+			badCusipTicker = new Hashtable<Cusip, String>();
 		
 		System.out.println("Number stored badCusip " + badCusipTicker.size());
 		//TODO had a check to see if there are a lot of badCusips
 		
 		String tick;
-		for(String cusip: cusips){
+		for(Cusip cusip: cusips){
 			if(DB.getTickerFromCusip(cusip, quarterDir) == null && !badCusipTicker.containsKey(cusip)){
 				tick = getTicker(cusip);
 				System.out.println(tick+" Cusip:"+cusip);
@@ -554,37 +583,9 @@ public class SECData {
 
 	}
 	
-	private static void printStatementError(String statement) {
-		System.err.println(statement);
-		System.exit(1);
-	}
 	
-	public static String getCurrent13FQuarter(){ 
-		String r;
-		Calendar cal = Calendar.getInstance();
-		int year = cal.get(Calendar.YEAR);
-		int month = cal.get(Calendar.MONTH);
-		  //Get Time 
-		  if(month < Calendar.MARCH) 
-			   r = (year-1) + "/QTR" + 4+ "/"; 
-		  else if(month  <Calendar.JUNE) 
-			  r = year + "/QTR" + 1 + "/"; 
-		  else if(month < Calendar.SEPTEMBER) 
-			  r =  year + "/QTR" + 2 + "/";
-		  else r = year + "/QTR" + 3 + "/"; 
-		  
-		  return r;
-	  }
-	  
-	public String getTickerFromWRDS(String quarter){
-		//Check if WRDS exists for that quarter
-		//return null if not
-		//Open file get ticker
-		return "";
-	}
-	
-	public double getSharesOutStandingFromWRDS(String ticker, String quarter){
-		return 0;
+	public boolean isValidQuarter(Quarter quarter){
+		return quarter.compareTo(getMostRecentFinishedQuarter()) >= 0;
 	}
 
 }

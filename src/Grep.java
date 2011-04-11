@@ -74,7 +74,7 @@ public class Grep {
 	// Use the linePattern to break the given CharBuffer into lines, applying
 	// the input pattern to each line to see if we have a match
 	//
-	private static ArrayList<String> grep(File f, CharBuffer cb, File writeTo)
+	private static ArrayList<String> grep(CharBuffer cb, File writeTo)
 			throws IOException {
 		ArrayList<String> foundInstances = null;
 		boolean writeOut;
@@ -141,12 +141,22 @@ public class Grep {
 		CharBuffer cb = decoder.decode(bb);
 
 		// Perform the search
-		ArrayList<String> foundInstances = grep(f, cb, writeTo);
+		ArrayList<String> foundInstances = grep(cb, writeTo);
 
 		// Close the channel and the stream
 		fc.close();
 
 		return foundInstances;
 	}
+	
+	public static ArrayList<String> grep(String str, File writeTo, String pattern) throws IOException{
+		compile(pattern);
+		CharBuffer cb = CharBuffer.allocate(str.length());
+		cb.put(str);
+		System.out.println(cb.toString());
+		ArrayList<String> foundInstances = grep(cb, writeTo);
+		return foundInstances;
+	}
+	
 
 }

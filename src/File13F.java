@@ -24,6 +24,7 @@ public class File13F {
 	private String matchType;
 	private int numClaimedHoldings;
 	private int numLines;
+	private boolean sharesValueSwitched = false;
 	
 	public File13F(String filePath){
 		
@@ -31,18 +32,21 @@ public class File13F {
 		
 	}
 	
+	public File13F(String filePath, boolean shValSwitch){
+		this( new File(filePath));
+		sharesValueSwitched = shValSwitch;		
+	}
+	
+	
 	public File13F(File f){
+		Lib.assertTrue(f.exists());
 		//Check input
 		f13F = f;
-		if(!f13F.exists()){
-			System.err.println("File does not exist");
-			System.exit(1);
-		}
 		fund13F = new Fund();
 		matchType = "";
 		setFundName();
 		setFundCIK();
-		setQuarter();
+		setFundQuarter();
 		try {
 			numLines = countNumLines(f13F.getPath());
 			initFund();
@@ -51,65 +55,35 @@ public class File13F {
 			System.exit(1);
 		}
 		
-		if(!fund13F.isValidFund()){
-			System.out.println("Fund is invalid. Fund name: " +fund13F.getFundName()+ " CIK: " + fund13F.getCIK());
-			System.exit(1);
-		}
+		//post condition
+		Lib.assertTrue(fund13F.isValidFund());
 	}
 	
-
-	private void setFundName(){
+	
+	private String getValueAfter(String s){
 		String name = null;
 		ArrayList<String> matchingVals;
 		try {
 			matchingVals = Grep.grep(f13F, null,"COMPANY CONFORMED NAME:");
 			name = matchingVals.get(0).split(":")[1];
-			if(name == null){
-				System.err.println(f13F.getPath());
-				System.exit(1);
-			}
+			Lib.assertTrue(name != null, f13F.getPath());
 			
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		return name.trim();
+	}
 
-		fund13F.setFundName(name.trim());
+	private void setFundName(){
+		fund13F.setFundName(getValueAfter("COMPANY CONFORMED NAME:"));
 	}
 	
 	private void setFundCIK(){
-		String name = null;
-		ArrayList<String> matchingVals;
-		try {
-			matchingVals = Grep.grep(f13F, null,"CENTRAL INDEX KEY:");
-			name = matchingVals.get(0).split(":")[1];
-			if(name == null){
-				System.err.println(f13F.getPath());
-				System.exit(1);
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		fund13F.setCIK(name.trim());
+		fund13F.setCIK(getValueAfter("CENTRAL INDEX KEY:"));
 	}
 
-	private void setQuarter(){
-		String name = null;
-		ArrayList<String> matchingVals;
-		try {
-			matchingVals = Grep.grep(f13F, null,"FILED AS OF DATE:");
-			name = matchingVals.get(0).split(":")[1];
-			if(name == null){
-				System.err.println(f13F.getPath());
-				System.exit(1);
-			}
-			
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		fund13F.setQuarter(name.trim());
+	private void setFundQuarter(){
+		fund13F.setQuarter(getValueAfter("FILED AS OF DATE:"));
 	}
 	
 	public Fund getFund(){
@@ -170,17 +144,9 @@ public class File13F {
 	private void initFund() throws IOException{
 
 		//load file into wholeFile
-		String line;
-        StringBuffer buffer = new StringBuffer();
-        String wholeFile;
-        FileInputStream fileInputStream = new FileInputStream(f13F);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream));
-        while((line = reader.readLine()) != null) {
-            buffer.append(line + "\n");
-        }
-        reader.close();
-        wholeFile = buffer.toString();
-        
+		
+        String wholeFile = removeLinesWithPutOrCall(f13F);
+
         //FORMAT file
         wholeFile = wholeFile.replace( '$', ' '); //Needed to get rid of $ in front of value
         wholeFile = wholeFile.replaceAll("-", ""); //Needed to get rid of - between cusips
@@ -203,10 +169,7 @@ public class File13F {
 			bestMatch = getListMatches(wholeFile);
 		
 		//TEST CASE
-		if(matchType.isEmpty()){
-			System.err.println("Match Type is empty");
-			System.exit(1);
-		}
+		Lib.assertTrue(!matchType.isEmpty());
 		
 		System.out.println("Number Claimed: " + numClaimedHoldings+ " Number of lines: " + numLines);
 		System.out.println("Number of matched lines: " + getNumLinesMatched(bestMatch) + " Number unique: " +bestMatch.size());
@@ -218,9 +181,20 @@ public class File13F {
 			System.err.println(matchType);
 			System.err.println(bestMatch);
 			System.err.println("Number of Lines " + numLines);
-			Runtime.getRuntime().exec("open "+f13F.getCanonicalPath());
+//			Runtime.getRuntime().exec("open "+f13F.getCanonicalPath());
 		}
 		addToHoldingsFromMatches(bestMatch);
+	}
+	
+	private String removeLinesWithPutOrCall(File f){
+		ArrayList<String> arrayString  = new ArrayList<String>();
+		try {
+			arrayString = Grep.grep(f, null, "^((?!\\b(CALL|Call|call|PUT|Put|put)\\b).)*$");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return arrayString.toString().replaceAll("\\[", "").replaceAll("\\]","").replaceAll(",","");
 	}
 	
 	
@@ -316,7 +290,8 @@ public class File13F {
 		double valueTempDouble;
 		double sharesTempDouble;
 		String newline;
-
+		Cusip cusip;
+		
 		for (String line : bestMatch) {
 			cusipString = "";
 			valueTemp = "";
@@ -349,34 +324,15 @@ public class File13F {
 			if (matchType.contains("Six Two One"))
 				cusipString = cusipString + tempToken.nextToken() + tempToken.nextToken();
 			
-			if(cusipString.length() == 7)
-				cusipString = cusipString  + "0";
 			
-			if(cusipString.length() == 8){
-				try {
-					cusipString = cusipString + getCusipCheckDigit(cusipString);
-				} catch (IllegalArgumentException e) {
-					System.err.println(bestMatch);
-					System.err.println(newline);
-					System.err.println(matchType);
-					System.err.println(f13F.getPath());
-					Runtime.getRuntime().exec("open "+f13F.getCanonicalPath());
-					e.printStackTrace();
-					System.exit(1);
-				}
-			}	
-			
-			if(cusipString.length() < 9){
-				System.err.println("Cusip length less than 9");
-				System.exit(1);
-			}
-				
-			
-			if (!isCusipValid(cusipString)) {
+			Lib.assertTrue(cusipString.length() == 9);
+			try{
+				cusip = new Cusip(cusipString);
+			}catch(Exception e){
 				//TODO CHECK ratio OF acceptable cusip's to matched cusips
 				continue;
 			}
-
+			
 			if (!matchType.contains("No Value") && !matchType.contains("Mashed"))
 				valueTemp = tempToken.nextToken();
 			else if(matchType.contains("No Value"))
@@ -404,8 +360,8 @@ public class File13F {
 				// get an ERROR
 				System.out.println(bestMatch);
 				System.out.println("MatchType: " + matchType + " Line: " 
-						+ line + " cusip:" + cusipString + " value: " + valueTemp + " NewLine: " + newline);
-				Runtime.getRuntime().exec("open "+ f13F.getCanonicalPath());
+						+ line + " cusip:" + cusip + " value: " + valueTemp + " NewLine: " + newline);
+//				Runtime.getRuntime().exec("open "+ f13F.getCanonicalPath());
 				sharesTemp = tempToken.nextToken();
 			}
 
@@ -423,10 +379,10 @@ public class File13F {
 
 			if (!isStringNumber(removeLettersFromEnd(sharesTemp)) || !isStringNumber(valueTemp)) { //error output
 				System.err.println("Shares or Value dont have a number");
-				System.err.println(cusipString);
+				System.err.println(cusip);
 				System.err.println(line);
 				System.err.println(matchType);
-				Runtime.getRuntime().exec("open "+f13F.getCanonicalPath());
+//				Runtime.getRuntime().exec("open "+f13F.getCanonicalPath());
 			}
 			
 			valueTempDouble += new Double(removeLettersFromEnd(valueTemp));
@@ -454,7 +410,11 @@ public class File13F {
 				}
 			}
 
-			fund13F.addHoldings(cusipString, new Holding(valueTempDouble, sharesTempDouble));
+			
+			if(sharesValueSwitched)
+				fund13F.addHoldings(cusip, new Holding(sharesTempDouble, valueTempDouble));
+			else
+				fund13F.addHoldings(cusip, new Holding(valueTempDouble, sharesTempDouble));
 		}
 
 		if (fund13F.getHoldings().keySet().size() == 0) {
@@ -481,13 +441,6 @@ public class File13F {
 		return s.substring(0, s.length()-indx);
 	}
 	
-	private static boolean hasNumber(String s){
-		for(char c: s.toCharArray()){
-			if(Character.isDigit(c))
-				return true;
-		}
-		return false;
-	}
 	
 	private boolean isStringNumber(String in) {
 		try {
@@ -498,81 +451,12 @@ public class File13F {
 		return true;
 	}
 	
-	public static boolean isCusipValid(String cusip)
-	{
-	    if(!hasNumber(cusip))
-	    	return false;
-	    if (cusip.length() != 9 || !Character.isDigit(cusip.charAt(8)))
-	        return false;
-	    if (getCusipCheckDigit(cusip.substring(0,8)) != cusip.charAt(8) )
-	        return false;
-	    return true;
-	}
+
 	
-	//Determines the CUSIP check digit, algorithm from Wikipedia
-	public static char getCusipCheckDigit(String cusip) throws IllegalArgumentException{
-	  int sum = 0, v =0, p, result;
-	  char c;
-	   if(cusip.length() != 8){
-	       throw new IllegalArgumentException("Error input for checkCusipDigit not correct length (8), Length:" + cusip.length()+ " Cusip: " + cusip);
-	   }
-	   
-	   for(int ii = 0; ii < cusip.length(); ii++){
-		   
-		  c = cusip.charAt(ii);
-	      if(Character.isDigit(c))
-	          v = Character.getNumericValue(c);
-	      else if(Character.isLetter(c)){
-	          p = c-96;
-	          if( p < 0)
-	              p = p+32;
-	          v= p+9;
-	      }else if( c == '*')
-	          v = 36;
-	      else if( c == '@')
-	          v = 37;
-	      else if( c =='#')
-	          v = 38;
-	      
-	      if(((ii+1)%2) == 0){
-	         v = v * 2;
-	      }
-	      sum = sum + v/10 + (v % 10);
-	   }
-	   
-	   result = (10-(sum%10)) % 10;
-	   return Character.forDigit(result, 10);
-	}  
+	
 	
 	/**************MATCHING**************/
 	
-	public boolean matchesAreEqual(Matcher m1, Matcher m2){
-		boolean matchesEqual = false; 
-		m1.reset();
-		m2.reset();
-		
-		if(m1.matches()){
-			while(m1.find()){
-				if(m2.find()){
-					if(!m1.group().equals(m2.group()) )
-						break;	
-				}else
-					break;
-				if(m1.end() == m2.end())
-					matchesEqual = true;
-			}
-		}
-		return matchesEqual;	
-	}
-	
-	public ArrayList<String> getArrayListOfMatches(Matcher m){
-		ArrayList<String> matchInsts = new ArrayList<String>();
-		m.reset();
-		while(m.find()){
-			matchInsts.add(m.group());
-		}
-		return matchInsts;
-	}
 	
 	private ArrayList<String> getMatches(String wholeFile, Pattern cusipPattern, Pattern cusipPatternTest){
 		Matcher pm = cusipPattern.matcher(wholeFile);
@@ -590,106 +474,6 @@ public class File13F {
 			return new ArrayList<String>();
 	}
 	
-//	private static final String NOT_LETTER = "[^A-Za-z]";
-//	private static final String NOT_DIGIT = "[^0-9]";
-//	private static final String NOT_DIGIT_OR_LETTER = "[^A-Za-z0-9]";
-	private static final String LETTERS_AND_DIGITS = "[0-9A-Za-z]";
-	private static final String LETTERS = "[A-Za-z]";
-	private static final String NAME = "[A-Za-z. ]+"; //. is needed for INC.
-	private static final String SPACE = "[|\t\n$,= ]+"; //space with newline
-	private static final String SPACE_STAR = "[|\t\n$,= ]*";
-	private static final String SPACE_WON = "[|\t$,= ]+"; //space without newline
-	private static final String NUMBER = "[0-9,.]+";
-	private static final String SOMETHING_TIL_NEWLINE = "[^\n]+";
-	private static final String NEWLINE = "\n";
-	
-	//I am allowing the 7,8th characters to be alphanumeric to include non-equities to match number claimed and number found
-	private static final String CUSIP = LETTERS_AND_DIGITS + "\\d{2}"+LETTERS_AND_DIGITS + "{3}" +LETTERS_AND_DIGITS+"{1,2}"+ "\\d{0,1}"; 
-	private static final String CUSIP_NINE = LETTERS_AND_DIGITS + "\\d{2}"+LETTERS_AND_DIGITS + "{3}" +LETTERS_AND_DIGITS+"{2}"+ "\\d{1}"; 
-	private static final String CUSIP_EIGHT = LETTERS_AND_DIGITS + "\\d{2}"+LETTERS_AND_DIGITS + "{3}" +LETTERS_AND_DIGITS+"{2}"+ "\\d{0}";
-	private static final String MANY_LETTERS = LETTERS +"+";
-
-	private String sixTwoOneLettersAndDigits = "\\d{3}"+LETTERS_AND_DIGITS + "{3}"+" "+LETTERS_AND_DIGITS+"{2}"+ " " + "\\d{1}";
-		
-	public ArrayList<String> getListMatchesDefault(String wholeFile){
-		 Pattern cusipPattern = Pattern.compile(CUSIP+SPACE+NUMBER+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 if(!pm.find()) //if nothing is found
-				return new ArrayList<String>();
-		 return getArrayListOfMatches(pm);
-	}
-	
-	public ArrayList<String> getListMatchesMashedNine(String wholeFile){
-		//Space_star because there are some where the cusip and value is merged;
-		Pattern cusipPattern = Pattern.compile(CUSIP_NINE+SPACE_STAR+NUMBER+SPACE+NUMBER);
-		Matcher pm = cusipPattern.matcher(wholeFile);		
-		return getArrayListOfMatches(pm);
-	} 
-	
-	public ArrayList<String> getListMatchesMashedEight(String wholeFile){
-		//Space_star because there are some where the cusip and value is merged;
-		//if mashed it has to be a number greater than length of one
-		Pattern cusipPattern = Pattern.compile(CUSIP_EIGHT+SPACE_STAR+NUMBER+SPACE+NUMBER);
-		Pattern cusipPatternTest = Pattern.compile(CUSIP_EIGHT+SPACE_STAR+NUMBER);
-		return getMatches(wholeFile, cusipPattern, cusipPatternTest);		
-	} 
-	
-	public ArrayList<String> getListMatchesSharesPriceMarket(String wholeFile){
-		Pattern cusipPattern = Pattern.compile(CUSIP+ SPACE+NUMBER+SPACE+NUMBER+SPACE+NUMBER); 
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	public ArrayList<String> getListMatchesNoValue(String wholeFile){
-		 Pattern cusipPattern = Pattern.compile(CUSIP+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	
-	public ArrayList<String> getListMatchesSoleShareSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(CUSIP+ SPACE+NUMBER+SPACE+MANY_LETTERS+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	public ArrayList<String> getListMatchesSHSoleShareSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(CUSIP+ SPACE+NUMBER+SPACE+MANY_LETTERS+SPACE+MANY_LETTERS+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-
-	public ArrayList<String> getListMatchesSixTwoOne(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(sixTwoOneLettersAndDigits+ SPACE+NUMBER+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	
-	public ArrayList<String> getListMatchesNameCusipSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(CUSIP+SPACE+NAME+SPACE+NUMBER+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	
-	public ArrayList<String> getListMatchesNameTickerCusipSwitched(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(CUSIP+SPACE+NAME+SPACE+NAME+SPACE+NUMBER+SPACE+NUMBER);
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	public ArrayList<String> getListMatchesDefaultAdditionalValueShares(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(CUSIP+ "(" + SPACE_WON + NUMBER + SPACE_WON + NUMBER + SOMETHING_TIL_NEWLINE+NEWLINE+")+" );
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
-	
-	public ArrayList<String> getListMatchesSixTwoOneAdditionalValueShares(String wholeFile){
-		Pattern cusipPattern= Pattern.compile(sixTwoOneLettersAndDigits+ "(" + SPACE_WON + NUMBER + SPACE_WON + NUMBER + SOMETHING_TIL_NEWLINE+NEWLINE+")+");
-		 Matcher pm = cusipPattern.matcher(wholeFile);
-		 return getArrayListOfMatches(pm);
-	}
 	
 	public ArrayList<String> getListMatches(String wholeFile) {
 		ArrayList<String> bestMatchTemp;	
@@ -784,7 +568,6 @@ public class File13F {
 		//then return the largest of the two
 		return bestMatch;
 	}
-	
 	//Matching problems:
 	// 0001055980-10-000001.txt 5 4 cusip split need to combine with default????
 	// numbers around cusip, use matching in addHoldingsFromMatches
@@ -794,6 +577,112 @@ public class File13F {
 	//filings/13Fs/2010/QTR1/data/0001140361-10-006694.txt has cusips and in other's instance has tickers in cusip col
 	//filings/13Fs/2010/QTR1/data/0001144969-10-000006.txt value and shares mashed together so find instance of it where not 
 	//mashed then get get substring length then do match by substring For each line with a valid cusip
+	
+	
+//	private static final String NOT_LETTER = "[^A-Za-z]";
+//	private static final String NOT_DIGIT = "[^0-9]";
+//	private static final String NOT_DIGIT_OR_LETTER = "[^A-Za-z0-9]";
+	private static final String LETTERS_AND_DIGITS = "[0-9A-Za-z]";
+	private static final String LETTERS = "[A-Za-z]";
+	private static final String NAME = "[A-Za-z. ]+"; //. is needed for INC.
+	private static final String SPACE = "[|\t\n$,= ]+"; //space with newline
+	private static final String SPACE_STAR = "[|\t\n$,= ]*";
+	private static final String SPACE_WON = "[|\t$,= ]+"; //space without newline
+	private static final String NUMBER = "[0-9,.]+";
+	private static final String SOMETHING_TIL_NEWLINE = "[^\n]+";
+	private static final String NEWLINE = "\n";
+	
+	//I am allowing the 7,8th characters to be alphanumeric to include non-equities to match number claimed and number found
+	private static final String CUSIP = LETTERS_AND_DIGITS + "\\d{2}"+LETTERS_AND_DIGITS + "{3}" +LETTERS_AND_DIGITS+"{1,2}"+ "\\d{0,1}"; 
+	private static final String CUSIP_NINE = LETTERS_AND_DIGITS + "\\d{2}"+LETTERS_AND_DIGITS + "{3}" +LETTERS_AND_DIGITS+"{2}"+ "\\d{1}"; 
+	private static final String CUSIP_EIGHT = LETTERS_AND_DIGITS + "\\d{2}"+LETTERS_AND_DIGITS + "{3}" +LETTERS_AND_DIGITS+"{2}"+ "\\d{0}";
+	private static final String MANY_LETTERS = LETTERS +"+";
+
+	private String sixTwoOneLettersAndDigits = "\\d{3}"+LETTERS_AND_DIGITS + "{3}"+" "+LETTERS_AND_DIGITS+"{2}"+ " " + "\\d{1}";
+	
+	public ArrayList<String> getListMatchesDefault(String wholeFile){
+		 Pattern cusipPattern = Pattern.compile(CUSIP+SPACE+NUMBER+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesMashedNine(String wholeFile){
+		//Space_star because there are some where the cusip and value is merged;
+		Pattern cusipPattern = Pattern.compile(CUSIP_NINE+SPACE_STAR+NUMBER+SPACE+NUMBER);
+		Matcher pm = cusipPattern.matcher(wholeFile);		
+		return getArrayListOfMatches(pm);
+	} 
+	
+	public ArrayList<String> getListMatchesMashedEight(String wholeFile){
+		//Space_star because there are some where the cusip and value is merged;
+		//if mashed it has to be a number greater than length of one
+		Pattern cusipPattern = Pattern.compile(CUSIP_EIGHT+SPACE_STAR+NUMBER+SPACE+NUMBER);
+		Pattern cusipPatternTest = Pattern.compile(CUSIP_EIGHT+SPACE_STAR+NUMBER);
+		return getMatches(wholeFile, cusipPattern, cusipPatternTest);		
+	} 
+	
+	public ArrayList<String> getListMatchesSharesPriceMarket(String wholeFile){
+		Pattern cusipPattern = Pattern.compile(CUSIP+ SPACE+NUMBER+SPACE+NUMBER+SPACE+NUMBER); 
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesNoValue(String wholeFile){
+		 Pattern cusipPattern = Pattern.compile(CUSIP+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesSoleShareSwitched(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(CUSIP+ SPACE+NUMBER+SPACE+MANY_LETTERS+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesSHSoleShareSwitched(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(CUSIP+ SPACE+NUMBER+SPACE+MANY_LETTERS+SPACE+MANY_LETTERS+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+
+	public ArrayList<String> getListMatchesSixTwoOne(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(sixTwoOneLettersAndDigits+ SPACE+NUMBER+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesNameCusipSwitched(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(CUSIP+SPACE+NAME+SPACE+NUMBER+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesNameTickerCusipSwitched(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(CUSIP+SPACE+NAME+SPACE+NAME+SPACE+NUMBER+SPACE+NUMBER);
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesDefaultAdditionalValueShares(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(CUSIP+ "(" + SPACE_WON + NUMBER + SPACE_WON + NUMBER + SOMETHING_TIL_NEWLINE+NEWLINE+")+" );
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getListMatchesSixTwoOneAdditionalValueShares(String wholeFile){
+		Pattern cusipPattern= Pattern.compile(sixTwoOneLettersAndDigits+ "(" + SPACE_WON + NUMBER + SPACE_WON + NUMBER + SOMETHING_TIL_NEWLINE+NEWLINE+")+");
+		 Matcher pm = cusipPattern.matcher(wholeFile);
+		 return getArrayListOfMatches(pm);
+	}
+	
+	public ArrayList<String> getArrayListOfMatches(Matcher m){
+		ArrayList<String> matchInsts = new ArrayList<String>();
+		m.reset();
+		while(m.find()){
+			matchInsts.add(m.group());
+		}
+		return matchInsts;
+	}
 }
 	
 
