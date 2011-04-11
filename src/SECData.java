@@ -283,7 +283,7 @@ public class SECData {
 	private void verifyDatabase(Quarter quarter) throws IOException{
 		//calculate price for all stocks
 		BufferedWriter out = new BufferedWriter(new FileWriter("BADCIKS.txt"));
-		ArrayList<String> ciks = DB.getCIKS(quarter);
+		ArrayList<CIK> ciks = DB.getCIKS(quarter);
 		ArrayList<Cusip> cusipsHeldByAtLeast10 = DB.getCusipsHeldByAtLeast(10, quarter);
 		Cusip matchedCusip = null;
 		double correctPrice;
@@ -292,7 +292,7 @@ public class SECData {
 		double upperBound = 1.0 + .2;
 		double valueMultiplier = 1000;
 		String file = "";
-		for(String cik :  ciks){
+		for(CIK cik :  ciks){
 			matchedCusip = null;
 			ArrayList<Cusip> cusipsForCik = DB.getCusipsHeldBy(cik, quarter);
 			for(Cusip c : cusipsForCik){

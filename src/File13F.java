@@ -79,11 +79,17 @@ public class File13F {
 	}
 	
 	private void setFundCIK(){
-		fund13F.setCIK(getValueAfter("CENTRAL INDEX KEY:"));
+		fund13F.setCIK(new CIK(getValueAfter("CENTRAL INDEX KEY:")));
 	}
 
 	private void setFundQuarter(){
-		fund13F.setQuarter(getValueAfter("FILED AS OF DATE:"));
+		//input is 20110214, YEAR{4}Month{2}DAY{2}
+		String date = getValueAfter("FILED AS OF DATE:");
+		Lib.assertTrue(date.length() == 8);
+		int year = new Integer(date.substring(0, 4));
+		int month = new Integer(date.substring(4, 6)) - 1;
+		
+		fund13F.setQuarter(new Quarter(year, month));
 	}
 	
 	public Fund getFund(){
@@ -227,7 +233,7 @@ public class File13F {
 			String tok;
 			while(k.hasMoreTokens()){
 				tok = k.nextToken();
-				if(isStringNumber(tok))
+				if(stringIsNumber(tok))
 					return Integer.parseInt(tok);
 			}
 		}else if(m1.find()){
@@ -236,7 +242,7 @@ public class File13F {
 			while(k.hasMoreTokens()){
 				tok = k.nextToken();
 				
-				if(isStringNumber(tok))
+				if(stringIsNumber(tok))
 					return Integer.parseInt(tok);
 			}
 		}else if(m2.find()){
@@ -244,7 +250,7 @@ public class File13F {
 			String tok;
 			while(k.hasMoreTokens()){
 				tok = k.nextToken();
-				if(isStringNumber(tok))
+				if(stringIsNumber(tok))
 					return Integer.parseInt(tok);
 			}
 		}
@@ -341,12 +347,12 @@ public class File13F {
 				
 
 			if (matchType.contains("Name Cusip Switched")) {
-				while (!isStringNumber(valueTemp))
+				while (!stringIsNumber(valueTemp))
 					valueTemp = tempToken.nextToken();
 			}
 
 			if (matchType.contains("Name Ticker Cusip Switched")) {
-				while (!isStringNumber(valueTemp))
+				while (!stringIsNumber(valueTemp))
 					valueTemp = tempToken.nextToken();
 			}
 						
@@ -367,17 +373,17 @@ public class File13F {
 
 			if (matchType.contains("Sole Shares Switched")) { // This means that "Sole" came before the number of shares owned
 				sharesTemp = tempToken.nextToken();
-				while (!isStringNumber(sharesTemp))
+				while (!stringIsNumber(sharesTemp))
 					sharesTemp = tempToken.nextToken();
 			} else if (tempToken.hasMoreTokens()) { // !matchType.contains("Sole Shares Switched")
 				String temp = tempToken.nextToken();
-				if(isStringNumber(temp)){
+				if(stringIsNumber(temp)){
 					valueTemp += sharesTemp;
 					sharesTemp = temp;
 				}
 			}
 
-			if (!isStringNumber(removeLettersFromEnd(sharesTemp)) || !isStringNumber(valueTemp)) { //error output
+			if (!stringIsNumber(removeLettersFromEnd(sharesTemp)) || !stringIsNumber(valueTemp)) { //error output
 				System.err.println("Shares or Value dont have a number");
 				System.err.println(cusip);
 				System.err.println(line);
@@ -442,7 +448,7 @@ public class File13F {
 	}
 	
 	
-	private boolean isStringNumber(String in) {
+	private boolean stringIsNumber(String in) {
 		try {
 			Double.parseDouble(in);
 		} catch (NumberFormatException ex) {

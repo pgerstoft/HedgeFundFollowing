@@ -294,7 +294,7 @@ public class DB {
 		return true;
 	}
 
-	public void insertHedgeFund(String cik, String fundName, Quarter quarter, String fileName) {
+	public void insertHedgeFund(CIK cik, String fundName, Quarter quarter, String fileName) {
 		fundName = fundName.replaceAll("'", "");
 		fundName = fundName.replace("\\", "");
 		insertValues(hedgeFund,cik + "'," 
@@ -323,7 +323,7 @@ public class DB {
 		closeConnection();
 	}
 	
-	public void insertHedgeFundHoldings(Cusip cusip, String cik, double value,
+	public void insertHedgeFundHoldings(Cusip cusip, CIK cik, double value,
 			double shares, Quarter quarter) {
 		
 		insertValues(hedgeFundHoldings, cusip + "','" + cik + "'," + value + ","
@@ -351,7 +351,7 @@ public class DB {
 					.println("\n-------------------------------------------------");
 
 			while (results.next()) {
-				String cik = results.getString(1);
+				CIK cik = new CIK(results.getString(1));
 				String fundName = results.getString(2);
 				System.out.println(cik + "\t\t" + fundName);
 			}
@@ -381,13 +381,13 @@ public class DB {
 			System.out
 					.println("\n-------------------------------------------------");
 			Cusip cusip;
-			String cik;
+			CIK cik;
 			double value;
 			double shares;
 			Quarter quarterDir;
 			while (results.next()) {
 				cusip = new Cusip(results.getString(1));
-				cik = results.getString(2);
+				cik = new CIK(results.getString(2));
 				value = results.getDouble(3);
 				shares = results.getDouble(4);
 				quarterDir = new Quarter(results.getString(5));
@@ -688,8 +688,8 @@ public class DB {
 		}
 	}
 
-	public static Hashtable<String, Double> getFundValues(Quarter quarter){
-		Hashtable<String, Double> cikToFundValue = new Hashtable<String, Double>();
+	public static Hashtable<CIK, Double> getFundValues(Quarter quarter){
+		Hashtable<CIK, Double> cikToFundValue = new Hashtable<CIK, Double>();
 		try {
 
 			createConnection();
@@ -701,7 +701,7 @@ public class DB {
 					+ "GROUP BY CIK");
 			while (results.next()) {
 
-				cikToFundValue.put(results.getString(1), results.getDouble(2));
+				cikToFundValue.put(new CIK(results.getString(1)), results.getDouble(2));
 			}
 			closeConnection();
 
@@ -712,8 +712,8 @@ public class DB {
 		return cikToFundValue;
 	}
 	
-	public static ArrayList<String> getCIKS(){
-		ArrayList<String> ciks = new ArrayList<String>();
+	public static ArrayList<CIK> getCIKS(){
+		ArrayList<CIK> ciks = new ArrayList<CIK>();
 		try {
 
 			createConnection();
@@ -723,7 +723,7 @@ public class DB {
 					+ "FROM HEDGEFUND ");
 			
 			while (results.next()) {
-				ciks.add(results.getString(1));
+				ciks.add(new CIK(results.getString(1)));
 			}
 			closeConnection();
 
@@ -734,8 +734,8 @@ public class DB {
 		return ciks;
 	}
 	
-	public static Hashtable<String, Double> getFundsToShares(Cusip cusip, Quarter quarter){
-		Hashtable<String, Double> cikToShares = new Hashtable<String, Double>();
+	public static Hashtable<CIK, Double> getFundsToShares(Cusip cusip, Quarter quarter){
+		Hashtable<CIK, Double> cikToShares = new Hashtable<CIK, Double>();
 		try {
 
 			createConnection();
@@ -747,7 +747,7 @@ public class DB {
 							"AND CUSIP = '"+ cusip + "'" );
 			while (results.next()) {
 
-				cikToShares.put(results.getString(1), results.getDouble(2));
+				cikToShares.put(new CIK(results.getString(1)), results.getDouble(2));
 			}
 			closeConnection();
 
@@ -810,7 +810,7 @@ public class DB {
 		return x;
 	}
 	
-	public static ArrayList<Cusip> getCusipsHeldBy(String cik, Quarter quarter){
+	public static ArrayList<Cusip> getCusipsHeldBy(CIK cik, Quarter quarter){
 		ArrayList<Cusip> x = new ArrayList<Cusip>();
 		try {
 			createConnection();
@@ -834,7 +834,7 @@ public class DB {
 		return x;
 	}
 	
-	public static String getFileName(String cik, Quarter quarter){
+	public static String getFileName(CIK cik, Quarter quarter){
 		String x = "";
 		try {
 			createConnection();
@@ -857,7 +857,7 @@ public class DB {
 		return x;
 	}
 	
-	public static void removeFund(String cik, Quarter quarter){
+	public static void removeFund(CIK cik, Quarter quarter){
 		try {
 			createConnection();
 			stmt = conn.createStatement();
@@ -879,7 +879,7 @@ public class DB {
 		}
 	}
 	
-	public static double getFundValueDividedByShare(Cusip cusip, String cik, Quarter quarter){
+	public static double getFundValueDividedByShare(Cusip cusip, CIK cik, Quarter quarter){
 		double x = 0.0;
 		try {
 			createConnection();
@@ -927,8 +927,8 @@ public class DB {
 		return x;
 	}
 	
-	public static ArrayList<String> getCIKS(Quarter quarter){
-		ArrayList<String> x = new ArrayList<String>();
+	public static ArrayList<CIK> getCIKS(Quarter quarter){
+		ArrayList<CIK> x = new ArrayList<CIK>();
 		try {
 			createConnection();
 			stmt = conn.createStatement();
@@ -939,7 +939,7 @@ public class DB {
 
 			while (results.next()) {
 
-				x.add(results.getString(1));
+				x.add(new CIK(results.getString(1)));
 			}
 			closeConnection();
 

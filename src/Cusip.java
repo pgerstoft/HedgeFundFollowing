@@ -1,5 +1,5 @@
 
-public class Cusip{
+public class Cusip implements Comparable<Cusip>{
 
 	private String cusip;
 	

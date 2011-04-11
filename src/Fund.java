@@ -9,7 +9,7 @@ public class Fund {
 	private Hashtable<Cusip, Holding> holdings;
 	private Hashtable<Holding, LinkedList<Cusip>> reverseHoldings;
 	private String fundName;
-	private String cik;
+	private CIK cik;
 	private Quarter quarter;
 	private double fundValue;
 		
@@ -17,7 +17,7 @@ public class Fund {
 		this(null, null, null);
 	}
 	
-	public Fund(String fName, String fundCIK, Quarter quarter){
+	public Fund(String fName, CIK fundCIK, Quarter quarter){
 		fundName = fName;
 		this.quarter = quarter;
 		cik = fundCIK;
@@ -40,24 +40,16 @@ public class Fund {
 		fundName = name;
 	}
 	
-	public String getCIK(){
+	public CIK getCIK(){
 		return cik;
 	}
 	
-	public void setCIK(String fundCIK){
-		Lib.assertTrue(fundCIK.length() == 10);
+	public void setCIK(CIK fundCIK){
 		this.cik = fundCIK;
 	}
 	
-	//input is 20110214, YEAR{4}Month{2}DAY{2}
-	public void setQuarter(String date){
-		Lib.assertTrue(date.length() == 8);
-		
-		int year = new Integer(date.substring(0, 4));
-		int month = new Integer(date.substring(4, 6)) - 1;
-		
-		quarter = new Quarter(year, month);
-
+	public void setQuarter(Quarter q){
+		quarter = q;
 	}
 
 	public Quarter getQuarter(){
@@ -67,15 +59,8 @@ public class Fund {
 
 	//return whether the fundName and cik are properly set.
 	public boolean isValidFund(){
-		if(cik.length() != 10 || fundName.isEmpty() || quarter == null)
-			return false;
-		try{
-			Double.parseDouble(cik);
-		}catch (Exception e) {
-			return false;
-		}
-		
-		return true;
+		return cik != null || !fundName.isEmpty() || quarter != null;
+
 	}	
 	
 	public Hashtable<Cusip, Holding> getHoldings(){

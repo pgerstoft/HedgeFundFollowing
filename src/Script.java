@@ -95,14 +95,14 @@ public class Script {
 //		ArrayList<String> quarters;
 		
 		//get list of CIKs
-		ArrayList<String> ciks = DB.getCIKS();
+		ArrayList<CIK> ciks = DB.getCIKS();
 		Quarter[] quarters = {new Quarter("2011/QTR1/")}; 
 		//ticker, Shares
-		Hashtable<String, Double> previousQuarter = new Hashtable<String, Double>();
-		Hashtable<String, Double> currentQuarter = new Hashtable<String, Double>();
+		Hashtable<CIK, Double> previousQuarter = new Hashtable<CIK, Double>();
+		Hashtable<CIK, Double> currentQuarter = new Hashtable<CIK, Double>();
 		
-		Hashtable<String, Double> fundToSharesForOneEquity = new Hashtable<String, Double>();
-		Hashtable<String, Double> fundToFundSize = new Hashtable<String, Double>();
+		Hashtable<CIK, Double> fundToSharesForOneEquity = new Hashtable<CIK, Double>();
+		Hashtable<CIK, Double> fundToFundSize = new Hashtable<CIK, Double>();
 		String ticker;
 		StringBuffer line;
 		double sharesOutstanding;
@@ -113,7 +113,7 @@ public class Script {
 		
 		out.write("Ticker, ");
 		out.write("Quarter, ");
-		for(String cik: ciks){
+		for(CIK cik: ciks){
 			out.write("% of " + cik + ", ");
 			out.write("% stock " + cik + ", ");
 			
@@ -122,7 +122,7 @@ public class Script {
 		
 		for(Cusip cusip: cusips){
 			line = new StringBuffer();
-			for(String cik: ciks){
+			for(CIK cik: ciks){
 				currentQuarter.put(cik, 0.0);
 			}
 		
@@ -133,7 +133,7 @@ public class Script {
 				fundToFundSize = DB.getFundValues(quarter);
 //				sharePrice = DB.getPriceAtQuarterEnd(cusip, quarter);
 				
-				for(String cik: fundToSharesForOneEquity.keySet()){
+				for(CIK cik: fundToSharesForOneEquity.keySet()){
 					currentQuarter.put(cik, fundToSharesForOneEquity.get(cik));
 				}
 				
@@ -142,7 +142,7 @@ public class Script {
 				line.append(numHeldBy() + ", ");
 				line.append(concentration);
 				double fundConcentration = 0.0;
-				for(String cik: ciks){
+				for(CIK cik: ciks){
 					if (fundToFundSize.get(cik)  != null)
 						fundConcentration = currentQuarter.get(cik) * DB.getFundValueDividedByShare(cusip, cik, quarter)  / fundToFundSize.get(cik);
 					else
