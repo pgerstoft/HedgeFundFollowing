@@ -83,7 +83,12 @@ public class Cusip implements Comparable<Cusip>{
 		return cusip.compareTo(arg0.toString());
 	}
 	
-	public boolean equals(Cusip arg0){
+	@Override
+	public boolean equals(Object arg0){
 		return cusip.equalsIgnoreCase(arg0.toString());
+	}
+	
+	public int hashCode(){
+		return cusip.hashCode();
 	}
 }
