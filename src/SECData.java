@@ -18,6 +18,8 @@ public class SECData {
 	public static final String ftpSEC = "ftp.sec.gov";
 	public static final String ftpSECUser = "anonymous";
 	public static final String ftpSECPassword = "pgerstoft@berkeley.edu";
+	public static final	String sec13FHardDrive = "/Volumes/gerstoftbackup/Stocks/";
+	//public static final String sec13FsLocalDir = sec13FHardDrive+ "filings/13Fs/";
 	public static final String sec13FsLocalDir = "filings/13Fs/";
 	public static final String sec13FsFilingDir = "data/";
 	public static final String secRemoteFullDir = "edgar/full-index/";
@@ -63,12 +65,15 @@ public class SECData {
 		Lib.assertTrue(isValidQuarter(quarterDir));
 		
 		if(!overRide){
+			System.out.println("Get Company.Idx");
 			getCompanyIdx(quarterDir); //DO THIS EVERYTIME?
+			System.out.println("Create Company.Idx13F");
 			createCompanyIdx13F(quarterDir); //QUICK
-			resetnumFilesRead();
 			get13FsFromSEC(quarterDir); 
+			
+			resetnumFilesRead();
 		}
-		parseSEC13Fs(quarterDir);
+//		parseSEC13Fs(quarterDir);
 		return 1;
 	}
 	
@@ -137,8 +142,13 @@ public class SECData {
 			}
 		}
 		
-		if(numFiles == filesRemote13F.size())
+		System.out.println(filesRemote13F);
+		
+		if(numFiles == filesRemote13F.size()){
+			System.out.println(numFiles);
+			System.out.println("HERE");
 			return;
+		}
 		System.out.println(numFiles);
 		System.out.println(filesRemote13F.size());
 		ArrayList<String> filesLocal13F = new ArrayList<String>();
@@ -177,11 +187,13 @@ public class SECData {
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
 				forsplitting = line.split("/");
+				// /edgar/data/CIK/0123456789ABCDEFGH/0123456789-AB-CDEFGH.txt
 				middleVal = forsplitting[forsplitting.length - 1].split("-")[1];
 				noTxtNoDashes = forsplitting[forsplitting.length - 1]
 						.replaceAll("-", "").replace(".txt", "");
 				parentAndFile = forsplitting[forsplitting.length - 2] + "/"
-						+ middleVal + "/" + noTxtNoDashes + "/"
+//						+ middleVal + "/" 
+						+ noTxtNoDashes + "/"
 						+ forsplitting[forsplitting.length - 1];
 
 				Lib.assertTrue(parentAndFile.endsWith(".txt"));
@@ -200,7 +212,8 @@ public class SECData {
 				e2.printStackTrace();
 			}
 		}
-
+	
+		
 		return filesRemote13F;
 	}
 
@@ -215,19 +228,21 @@ public class SECData {
 		
 		//For WRDS
 //		DB.deleteTempTable();
-//		DB.createTempCusipTable();
+		DB.createTempCusipTable();
 		
 		Integer numFilesRead = (Integer) loadData(tempFolder+"formatSEC13FsIndex.data");		
 		if(numFilesRead == null || numFilesRead == allFiles.length)
 			numFilesRead = 0;
 		
-		Lib.assertTrue(allFiles == null || allFiles.length == 0, "No files for: "+ quarterDir);
+		Lib.assertTrue(allFiles != null || allFiles.length != 0, "No files for: "+ quarterDir);
 		
 		for(int ii = numFilesRead; ii< allFiles.length; ii++){
 			System.out.println(allFiles[ii].getPath() + " " + (ii + 1) + " / " + allFiles.length);
-			try{
+			//try{
 				f13F = new File13F(allFiles[ii]);
-			}catch(Exception e){ continue;}
+			//}catch(Exception e){ System.out.println("Exception"); continue;}
+			
+			
 			//0000950123-11-012552.txt
 			//f13F = new File13F(new File("filings/13Fs/2009/QTR2/data/0000312069-09-000043.txt"));
 			Hashtable<Cusip, Holding> newHoldings = f13F.getFund().getHoldings();
@@ -235,9 +250,9 @@ public class SECData {
 			cusips = newHoldings.keySet();	
 			
 			//if is not current quarter, for wrds
-//			for(String c:cusips){
-//				DB.insertTempCusipTable(c);
-//			}
+			for(Cusip c:cusips){
+				DB.insertTempCusipTable(c);
+			}
 			
 			
 			
@@ -258,27 +273,17 @@ public class SECData {
 		    }else{
 		    	//if is current holding quarter
 		    	//storeCusips(cusips, quarterDir);
-		    	//TODO allHoldings should also keep track of which Funds have already been added
-		    	storeFundInDB(f13F.getFund(), allFiles[ii].getPath());
+//		    	storeFundInDB(f13F.getFund(), allFiles[ii].getPath());
 		    }
 			
 			saveData(tempFolder+"formatSEC13FsIndex.data", ii+1);
 		}
-//		setStockPrices(quarterDir);
-		verifyDatabase(quarterDir);
-		DB.getInstance().updateNumHoldings(quarterDir);
+
+//		verifyDatabase(quarterDir);
+//		DB.getInstance().updateNumHoldings(quarterDir);
 		System.out.println("DONE");
 //		DB.writeTempVals();
 	}
-	
-//	private void setStockPrices(Quarter quarter){
-//		ArrayList<String> cusips = DB.getCusipsHeldByAtLeast(10, quarter);
-//		for(String cusip :  cusips){
-//			ArrayList<Double> prices = DB.getValueDividedByShares(cusip, quarter);
-//			
-//			DB.setStockPrice(cusip, quarter, prices.get(prices.size()/2)*1000);
-//		}
-//	}
 	
 	private void verifyDatabase(Quarter quarter) throws IOException{
 		//calculate price for all stocks
@@ -306,6 +311,8 @@ public class SECData {
 			
 			correctPrice = DB.getPrice(matchedCusip, quarter);
 			foundPrice = DB.getFundValueDividedByShare(matchedCusip, cik, quarter);
+			
+			//TODO if 1000 off divide all values by 1000
 			
 			if(upperBound*(correctPrice/valueMultiplier) > foundPrice && lowerBound*(correctPrice/valueMultiplier) < foundPrice)
 				continue;
@@ -354,13 +361,40 @@ public class SECData {
 		database.insertHedgeFund(f.getCIK(), f.getFundName(), f.getQuarter(), fileName);
 		double value;
 		double shares;
-		for(Cusip cusip: f.getHoldings().keySet()){
-			if(!cusips.contains(cusip))
-				continue;
-			value = f.getHoldings().get(cusip).getValue();
-			shares = f.getHoldings().get(cusip).getShares();
-			database.insertHedgeFundHoldings(cusip, f.getCIK(), value, shares, f.getQuarter());
+		BufferedWriter out;
+		try {
+			out = new BufferedWriter(new FileWriter("temp/temp.csv"));
+			for(Cusip cusip: f.getHoldings().keySet()){
+				if(!cusips.contains(cusip))
+					continue;
+				value = f.getHoldings().get(cusip).getValue();
+				shares = f.getHoldings().get(cusip).getShares();
+				out.write(cusip + ","  + f.getCIK()+ "," + value +"," + shares+","+ 0.0 + "," + f.getQuarter());
+//				database.insertHedgeFundHoldings(cusip, f.getCIK(), value, shares, 0.0, f.getQuarter());
+			}
+			DB.batchLoadHedgeFundHoldings(System.getProperty("user.dir") + "/temp/temp.csv");
+			setPortionOfFund(f.getCIK(), f.getQuarter());
+		}catch (Exception e) {
+			e.printStackTrace();
 		}
+	}
+	
+	private void setPortionOfFund(CIK cik, Quarter quarter){
+		BufferedWriter out;
+		try {
+			out = new BufferedWriter(new FileWriter("temp/temp.csv"));
+			Hashtable <Cusip, Double>  cusipToShares = DB.getShares(cik, quarter);
+			double quarterToFundValue = DB.getFundValue(cik, quarter);
+			double fundConcentration;
+			for(Cusip cusip: cusipToShares.keySet()){
+				fundConcentration = cusipToShares.get(cusip) * DB.getFundValueDividedByShare(cusip, cik, quarter)  / quarterToFundValue;
+				out.write( cusip+"," + fundConcentration  + "," + quarter + " \n");
+			}
+			out.close();
+			
+		} catch (IOException e) {e.printStackTrace();}
+
+		DB.batchSetPortionOfFund(cik, System.getProperty("user.dir") + "/temp/temp.csv");
 	}
 
 	
@@ -369,22 +403,6 @@ public class SECData {
 		
 		DB databaseDb = DB.getInstance();
 		databaseDb.insertCusipTicker(cusip, tick, quarter);
-	}
-
-
-		
-
-	public Hashtable<String, Double> getSharesOuststanding(Set<String> tickers){
-		Hashtable<String,Double> tickersToShares = new Hashtable<String, Double>();
-		
-		double shares;
-		for(String tick: tickers){
-			shares = getSharesOutstanding(tick);
-			tickersToShares.put(tick, shares);
-			System.out.println(tick + " " +  shares);
-		}
-		
-		return tickersToShares;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -585,7 +603,7 @@ public class SECData {
 	
 	
 	public boolean isValidQuarter(Quarter quarter){
-		return quarter.compareTo(getMostRecentFinishedQuarter()) >= 0;
+		return quarter.compareTo(getMostRecentFinishedQuarter()) <= 0;
 	}
 
 }
