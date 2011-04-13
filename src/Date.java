@@ -1,5 +1,5 @@
 
-public class Date {
+public class Date implements Comparable<Date>{
 
 	private int year;
 	private int month;
@@ -49,6 +49,19 @@ public class Date {
 	
 	public Quarter toQuarter(){
 		return new Quarter(year, month - 1);
+	}
+	
+	public int compareTo(Date arg0) {
+		return this.toString().compareTo(arg0.toString());
+	}
+	
+	@Override
+	public boolean equals(Object arg0){
+		return this.toString().equals(arg0.toString());
+	}
+	
+	public int hashCode(){
+		return toString().hashCode();
 	}
 	
 }
