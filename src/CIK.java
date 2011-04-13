@@ -31,4 +31,8 @@ public class CIK  implements Comparable<CIK>{
 		}
 		return true;
 	}
+	
+	public int hashCode(){
+		return cik.hashCode();
+	}
 }
