@@ -1,10 +1,8 @@
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.StringTokenizer;
 import java.util.regex.Matcher;
@@ -13,8 +11,6 @@ import java.util.regex.Pattern;
 //Process the file at opening of the file!
 //TODO VERIFY THAT MARKET VALUE COMES BEFORE SHARES
 //TODO VERIFY THAT PRICE DOES NOT COME BEFORE EITHER
-
-//TODO MATCH EIGHT OR NINE LETTERS {8,9}
 
 
 public class File13F {
@@ -64,7 +60,7 @@ public class File13F {
 		String name = null;
 		ArrayList<String> matchingVals;
 		try {
-			matchingVals = Grep.grep(f13F, null,"COMPANY CONFORMED NAME:");
+			matchingVals = Grep.grep(f13F, null,s);
 			name = matchingVals.get(0).split(":")[1];
 			Lib.assertTrue(name != null, f13F.getPath());
 			
@@ -79,7 +75,7 @@ public class File13F {
 	}
 	
 	private void setFundCIK(){
-		fund13F.setCIK(new CIK(getValueAfter("CENTRAL INDEX KEY:")));
+		fund13F.setCIK(new CIK(getValueAfter("CENTRAL INDEX KEY:").trim()));
 	}
 
 	private void setFundQuarter(){
@@ -100,53 +96,10 @@ public class File13F {
 		return numClaimedHoldings;
 	}
 	
-	
-	//FUTURE!
-	public static boolean isValueBeforePrice(File f) throws IOException{
-		String line;
-        StringBuffer buffer = new StringBuffer();
-        String wholeFile;
-        FileInputStream fileInputStream = new FileInputStream(f);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(fileInputStream));
-        while((line = reader.readLine()) != null) {
-            buffer.append(line + "\n");
-        }
-        reader.close();
-        wholeFile = buffer.toString();
-        
-        
-        wholeFile = wholeFile.replace( '$', ' '); //Needed to get rid of $ in front of value
-        wholeFile = wholeFile.replaceAll("-", ""); //Needed to get rid of - between cusips
-        wholeFile = wholeFile.replaceAll( "\"", " ");
-        wholeFile = wholeFile.replaceAll( "=", " ");
-        
-        
-        //DO BY indexof????
-        Pattern p = Pattern.compile("VALUE[^\n]*SH");
-        Matcher pm = p.matcher(wholeFile);
-        Pattern p1 = Pattern.compile("Value[^\n]*Sh");
-        Matcher pm1 = p1.matcher(wholeFile);
-        Pattern p2 = Pattern.compile("VALUE[^\n]*AM");
-        Matcher pm2 = p2.matcher(wholeFile);
-        Pattern p3 = Pattern.compile("Value[^\n]*Am");
-        Matcher pm3 = p3.matcher(wholeFile);
-        Pattern p4 = Pattern.compile("MV[^\n]*Sh");
-        Matcher pm4 = p4.matcher(wholeFile);
-        Pattern p5 = Pattern.compile("Value[^\n]*SH");
-        Matcher pm5 = p5.matcher(wholeFile);
-        Pattern p6 = Pattern.compile("Market[^\n]*Sh");
-        Matcher pm6 = p6.matcher(wholeFile);
-        if(!pm.find() && !pm1.find() && !pm2.find() &&  !pm3.find()  && !pm4.find() && !pm5.find() && !pm6.find())
-        	return false;
-        
-		return true;
-	}
-	
 	//gets All the holdings and stores them in a Fund object
 	private void initFund() throws IOException{
 
 		//load file into wholeFile
-		
         String wholeFile = removeLinesWithPutOrCall(f13F);
 
         //FORMAT file
@@ -170,7 +123,6 @@ public class File13F {
 		if(bestMatch.size() == 0)
 			bestMatch = getListMatches(wholeFile);
 		
-		//TEST CASE
 		Lib.assertTrue(!matchType.isEmpty());
 		
 		System.out.println("Number Claimed: " + numClaimedHoldings+ " Number of lines: " + numLines);
@@ -264,6 +216,10 @@ public class File13F {
 		return numFound >= numClaimedHoldings - .25*numClaimedHoldings ; //within twenty-five percent
 	}
 	
+	public boolean isFileSmall() {
+		return numLines < 200;
+	}
+	
 	public int countNumLines(String filename) throws IOException {
 		InputStream is = new BufferedInputStream(new FileInputStream(filename));
 		byte[] c = new byte[1024];
@@ -276,10 +232,6 @@ public class File13F {
 			}
 		}
 		return count;
-	}
-
-	public boolean isFileSmall() {
-		return numLines < 200;
 	}
 
 	
@@ -458,25 +410,7 @@ public class File13F {
 	
 	
 	/**************MATCHING**************/
-	
-	
-	private ArrayList<String> getMatches(String wholeFile, Pattern cusipPattern, Pattern cusipPatternTest){
-		Matcher pm = cusipPattern.matcher(wholeFile);
-		if(!pm.find()) //if nothing is found
-			return new ArrayList<String>();
 		
-		Matcher pmTest = cusipPatternTest.matcher(wholeFile);
-		
-		ArrayList<String> withNumbers = getArrayListOfMatches(pm);
-		ArrayList<String> withoutNumbers = getArrayListOfMatches(pmTest);
-
-		if (withNumbers.size() > withoutNumbers.size()) //verify that there are more cusips with numbers found than without
-			return withNumbers;
-		else
-			return new ArrayList<String>();
-	}
-	
-	
 	public ArrayList<String> getListMatches(String wholeFile) {
 		ArrayList<String> bestMatchTemp;	
 		double improvementRatio = 1.1;// for matches that are easy to match a lot.
@@ -685,6 +619,24 @@ public class File13F {
 		}
 		return matchInsts;
 	}
+	
+	
+	private ArrayList<String> getMatches(String wholeFile, Pattern cusipPattern, Pattern cusipPatternTest){
+		Matcher pm = cusipPattern.matcher(wholeFile);
+		if(!pm.find()) //if nothing is found
+			return new ArrayList<String>();
+		
+		Matcher pmTest = cusipPatternTest.matcher(wholeFile);
+		
+		ArrayList<String> withNumbers = getArrayListOfMatches(pm);
+		ArrayList<String> withoutNumbers = getArrayListOfMatches(pmTest);
+
+		if (withNumbers.size() > withoutNumbers.size()) //verify that there are more cusips with numbers found than without
+			return withNumbers;
+		else
+			return new ArrayList<String>();
+	}
+	
 }
 	
 
