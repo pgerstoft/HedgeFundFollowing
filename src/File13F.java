@@ -103,13 +103,15 @@ public class File13F {
         String wholeFile = removeLinesWithPutOrCall(f13F);
 
         //FORMAT file
-        wholeFile = wholeFile.replace( '$', ' '); //Needed to get rid of $ in front of value
-        wholeFile = wholeFile.replaceAll("-", ""); //Needed to get rid of - between cusips
-        wholeFile = wholeFile.replaceAll("\"", " ");
-        wholeFile = wholeFile.replaceAll("=", " ");
-        wholeFile = wholeFile.replaceAll("\\(","");
-        wholeFile = wholeFile.replaceAll("\\)", "");
+//        wholeFile = wholeFile.replace( '$', ' '); //Needed to get rid of $ in front of value
+//        wholeFile = wholeFile.replaceAll("-", ""); //Needed to get rid of - between cusips
+//        wholeFile = wholeFile.replaceAll("\"", " ");
+//        wholeFile = wholeFile.replaceAll("=", " ");
+//        wholeFile = wholeFile.replaceAll("\\(","");
+//        wholeFile = wholeFile.replaceAll("\\)", "");
+//        wholeFile = wholeFile.replaceAll("\\|", "");
 
+        wholeFile = wholeFile.replaceAll("[-$\\=\\(\\)|]", "");
         setNumClaimedHoldings(wholeFile);
 
       //get from end of <TABLE> 
@@ -148,7 +150,7 @@ public class File13F {
 			e.printStackTrace();
 		}
 		
-		return arrayString.toString().replaceAll("\\[", "").replaceAll("\\]","").replaceAll(",","");
+		return arrayString.toString().replaceAll("[\\[\\],]", "");
 	}
 	
 	
@@ -254,11 +256,10 @@ public class File13F {
 			sharesTempDouble = 0;
 
 			line.replaceAll("-", "");
-			if (line.replaceAll(",", "").split(" ").length == 1)
+			newline = line.replaceAll(",", "");
+			if (newline.split(" ").length == 1)
 				newline = line.replaceAll(",", " ");
-			else
-				newline = line.replaceAll(",", "");
-
+			
 			tempToken = new StringTokenizer(newline);
 
 			
@@ -279,7 +280,7 @@ public class File13F {
 				cusipString = cusipString + tempToken.nextToken() + tempToken.nextToken();
 			
 			
-			Lib.assertTrue(cusipString.length() == 9);
+//			Lib.assertTrue(cusipString.length() == 9);
 			try{
 				cusip = new Cusip(cusipString);
 			}catch(Exception e){
