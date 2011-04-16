@@ -11,17 +11,6 @@ public class CIK  implements Comparable<CIK>{
 			throw new IllegalArgumentException(); 
 	}
 	
-	public String toString(){
-		return cik;
-	}
-	
-	public int compareTo(CIK arg0){
-		return cik.compareTo(arg0.toString());
-	}
-	
-	public boolean equals(CIK arg0){
-		return cik.equalsIgnoreCase(arg0.toString());
-	}
 	
 	private boolean stringIsNumber(String in) {
 		try {
@@ -31,6 +20,24 @@ public class CIK  implements Comparable<CIK>{
 		}
 		return true;
 	}
+	
+	public String toString(){
+		return cik;
+	}
+	
+	public int compareTo(CIK arg0){
+		return cik.compareTo(arg0.toString());
+	}
+	
+	
+	public boolean equals(Object arg0){
+		if(arg0 instanceof CIK){
+			CIK x = (CIK) arg0;
+			return cik.equalsIgnoreCase(x.toString());
+		}
+		return false;
+	}
+
 	
 	public int hashCode(){
 		return cik.hashCode();

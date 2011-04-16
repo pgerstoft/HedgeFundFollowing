@@ -66,9 +66,13 @@ public class Quarter implements Comparable<Quarter>{
 		return this.toString().compareTo(arg0.toString());
 	}
 	
-	@Override
 	public boolean equals(Object arg0){
-		return this.toString().equals(arg0.toString());
+		if(arg0 instanceof Quarter){
+			Quarter q  = (Quarter) arg0;
+			return this.toString().equals(q.toString());
+		}
+		return false;
+		
 	}
 	
 	@Override

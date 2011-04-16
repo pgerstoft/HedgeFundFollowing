@@ -42,7 +42,18 @@ public class Holding implements Comparable<Holding>, java.io.Serializable{
 		return " Value: "+ value + " Shares: " + shares;
 	}
 	
+	public boolean equals(Object arg0){
+		if(arg0 instanceof Holding){
+			Holding x = (Holding) arg0;
+			return this.toString().equalsIgnoreCase(x.toString());
+		}
+		return false;
+	}
+
 	
+	public int hashCode(){
+		return this.toString().hashCode();
+	}
 	
 	
 }
