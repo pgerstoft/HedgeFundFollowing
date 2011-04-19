@@ -1,8 +1,12 @@
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
 
 
-
+//TODO:BATCH LOAD!
 
 public class WRDSFileRead {
 	private DB database;
@@ -14,8 +18,15 @@ public class WRDSFileRead {
 	public  void parseFile(String file){
 		System.out.println("WRDSFileRead: Parsing File...");
 		int colNumDataFQTR,colNumTic,colNumCusip, colNumCSHOQ = -1;
+		BufferedReader in =  null;
+		BufferedWriter outTickers = null;
+		BufferedWriter outShares = null;
+		String tempTickersFile = "tempTickers.csv";
+		String tempSharesFile = "tempShares.csv";
 		try{
-			BufferedReader in = new BufferedReader(new FileReader(file));
+			outTickers = new BufferedWriter(new FileWriter(tempTickersFile));
+			outShares = new BufferedWriter(new FileWriter(tempSharesFile));
+			in = new BufferedReader(new FileReader(file));
 			String line = in.readLine();
 			
 			
@@ -34,34 +45,53 @@ public class WRDSFileRead {
 			Cusip cusip;
 			while((line = in.readLine()) != null){
 				lineSplit = line.split(",");
-				System.out.println(line);
+//				System.out.println(line);
 				quarterDir = wrdsQTRFormatToqtrDirFormat(lineSplit[colNumDataFQTR]);
 				cusip = new Cusip(lineSplit[colNumCusip]);
-				storeTickersCusips(cusip, lineSplit[colNumTic], quarterDir);
+				outTickers.write(cusip + ","+lineSplit[colNumTic]+","+quarterDir+"\n");//storeTickersCusips(cusip, lineSplit[colNumTic], quarterDir);
 				sharesOutstanding = lineSplit[colNumCSHOQ];
 				if(sharesOutstanding.isEmpty())
-					saveSharesOutstanding(cusip, 0, quarterDir);
+					outShares.write(cusip+","+0+","+quarterDir + "\n" );//saveSharesOutstanding(cusip, 0, quarterDir);
 				else
-					saveSharesOutstanding(cusip, new Double(sharesOutstanding), quarterDir);
+					outShares.write(cusip+","+new Double(sharesOutstanding)+","+quarterDir + "\n" );//saveSharesOutstanding(cusip, new Double(sharesOutstanding), quarterDir);
 			}
 			
 		}catch(Exception e){ e.printStackTrace();}
-	}
-	
-	private int getColNumDataFQTR(String header){ return getColNum(header, "datafqtr");}
-	private int getColNumTic(String header){ return getColNum(header,"tic"); }
-	private int getColNumCusip(String header) { return getColNum(header, "cusip"); } 
-	private int getColNumCSHOQ(String header) { return getColNum(header, "cshoq"); } 
-	
-	private int getColNum(String header, String var){
-		int wordCount = 0;
-		for(String word : header.split(",")){
-			if(word.equalsIgnoreCase(var))
-				break;
-			wordCount++;
+		finally{
+		    if (in != null) {
+		        try {
+		            in.close();
+		        } catch (IOException e) {
+		        }
+		    }
+		    if(outShares != null){
+		    	try {
+		            outShares.close();
+		        } catch (IOException e) {
+		        }
+		    }
+		    if(outTickers != null){
+		    	try {
+		    		outTickers.close();
+		        } catch (IOException e) {
+		        }
+		    }
 		}
-		return wordCount;
+		
+		System.out.println("BatchLoading.....");
+		DB.batchLoadSharesOutstanding(System.getProperty("user.dir") + "/"+ tempSharesFile);
+		DB.batchLoadCusipTickers(System.getProperty("user.dir") + "/" + tempTickersFile);
+		System.out.println("DONE");
+		
+		new File(tempSharesFile).delete();
+		new File(tempTickersFile).delete();
 	}
+	
+	private int getColNumDataFQTR(String header){ return ReadCSVFile.getColNum(header, "datafqtr");}
+	private int getColNumTic(String header){ return ReadCSVFile.getColNum(header,"tic"); }
+	private int getColNumCusip(String header) { return ReadCSVFile.getColNum(header, "cusip"); } 
+	private int getColNumCSHOQ(String header) { return ReadCSVFile.getColNum(header, "cshoq"); } 
+	
 	
 	private void storeTickersCusips(Cusip cusip, String tick, Quarter quarter){ 
 		database.insertCusipTicker(cusip, tick, quarter);

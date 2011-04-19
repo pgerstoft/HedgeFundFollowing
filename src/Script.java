@@ -9,23 +9,32 @@ import java.util.TreeSet;
 
 public class Script {
 
+	private static String cusipTicker = "CUSIPTICKER";
+	private static String hedgeFundHoldings = "HEDGEFUNDHOLDINGS";
+
 	public static void main(String[] args) {
 		// setFundReturn(new Quarter(2011, 1, true));
-		// CRSPFileRead.parseFile("9a9bfff938ec8b45.csv");
+		CRSPFileRead.parseFile("CRSP.csv");
 		// setPortionOfFund(new CIK("0000009631"), new Quarter(2011, 1, true));
 		// Download SEC data
 		SECData inst = new SECData();
 		// String quarterDir = "2009/QTR2/";
-		// WRDSFileRead wrdsFreader = new WRDSFileRead();
-		// String file = "93dbde77c0e270ba.csv";
-		// //wrdsFreader.parseFile(file);
 
-		DataAnalysis x = new DataAnalysis();
-		x.makeDesignMatrix();
+		
 
-//		for (int year = 2004; year <= 2010; year++) {
+//		DataAnalysis x = new DataAnalysis();
+//		x.makeDesignMatrixCSV(new Quarter(2002, 1, true), 4);
+//		x.csvToArff("WRDS.csv", "WRDS.arff");
+//		x.csvToArff("designMatrix.csv", "designMatrix.arff");
+//		x.arffToSparse("designMatrix.arff");
+		//DB.deleteRowsIfCusipNotInCusipTicker();
+		
+//		DB.writeTempVals();
+		
+		
+//		for (int year = 2008; year <= 2010; year++) {
 //			for (int quarter = 1; quarter <= 4; quarter++) {
-//				if (year == 2004 && quarter < 3)
+//				if (year == 2008 && quarter < 3)
 //					//1Z E89 84X 90 5892 1274
 //					continue;
 //				inst.setQuarter(new Quarter(year, quarter, true));

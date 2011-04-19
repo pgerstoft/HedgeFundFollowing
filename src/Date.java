@@ -55,7 +55,6 @@ public class Date implements Comparable<Date>{
 		return this.toString().compareTo(arg0.toString());
 	}
 	
-	@Override
 	public boolean equals(Object arg0){
 		return this.toString().equals(arg0.toString());
 	}

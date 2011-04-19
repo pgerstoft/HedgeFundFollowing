@@ -48,7 +48,7 @@ public class File13F {
 			initFund();
 		} catch (IOException e) {
 			e.printStackTrace();
-			System.exit(1);
+			//System.exit(1);
 		}
 		
 		//post condition
@@ -103,15 +103,10 @@ public class File13F {
         String wholeFile = removeLinesWithPutOrCall(f13F);
 
         //FORMAT file
-//        wholeFile = wholeFile.replace( '$', ' '); //Needed to get rid of $ in front of value
-//        wholeFile = wholeFile.replaceAll("-", ""); //Needed to get rid of - between cusips
-//        wholeFile = wholeFile.replaceAll("\"", " ");
-//        wholeFile = wholeFile.replaceAll("=", " ");
-//        wholeFile = wholeFile.replaceAll("\\(","");
-//        wholeFile = wholeFile.replaceAll("\\)", "");
-//        wholeFile = wholeFile.replaceAll("\\|", "");
-
         wholeFile = wholeFile.replaceAll("[-$\\=\\(\\)|]", "");
+        //Needed to get rid of $ in front of value
+        //Needed to get rid of - between cusips
+        
         setNumClaimedHoldings(wholeFile);
 
       //get from end of <TABLE> 
@@ -352,7 +347,7 @@ public class File13F {
 					sharesTempDouble += new Double(sharesTemp);
 				}else{
 					e.printStackTrace();
-					System.exit(1);
+					//System.exit(1);
 				}
 			}
 			if (matchType.contains("Additional Value Shares on Separate Lines")) {

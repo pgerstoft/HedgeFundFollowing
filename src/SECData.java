@@ -179,13 +179,11 @@ public class SECData extends Data{
 			String line = null;
 			String parentAndFile = null;
 			String[] forsplitting;
-			String middleVal;
 			String noTxtNoDashes;
 			while ((line = reader.readLine()) != null) {
 				line = line.trim();
 				forsplitting = line.split("/");
 				// /edgar/data/CIK/0123456789ABCDEFGH/0123456789-AB-CDEFGH.txt
-				middleVal = forsplitting[forsplitting.length - 1].split("-")[1];
 				noTxtNoDashes = forsplitting[forsplitting.length - 1]
 						.replaceAll("-", "").replace(".txt", "");
 				parentAndFile = forsplitting[forsplitting.length - 2] + "/"
@@ -386,39 +384,40 @@ public class SECData extends Data{
 	}
 
 	private void storeFundInDB(Fund f, String fileName) {
-		Lib.assertTrue(f.isValidFund());
-
-		ArrayList<Cusip> cusips = DB.getCusips(f.getQuarter());
 
 		DB database = DB.getInstance();
 		database.insertHedgeFund(f.getCIK(), f.getFundName(), f.getQuarter(),
 				fileName);
 		double value;
 		double shares;
-		BufferedWriter out;
+		BufferedWriter out = null;
 		try {
 			out = new BufferedWriter(new FileWriter("temp/temp.csv"));
 			for (Cusip cusip : f.getHoldings().keySet()) {
-				// if(!cusips.contains(cusip))
-				// continue;
 				value = f.getHoldings().get(cusip).getValue();
 				shares = f.getHoldings().get(cusip).getShares();
 				out.write(cusip + "," + f.getCIK() + "," + value + "," + shares
 						+ "," + 0.0 + "," + f.getQuarter() + "\n");
-				// database.insertHedgeFundHoldings(cusip, f.getCIK(), value,
-				// shares, 0.0, f.getQuarter());
 			}
 			out.close();
-			DB.batchLoadHedgeFundHoldings(System.getProperty("user.dir")
-					+ "/temp/temp.csv");
+			
+					
 			// setPortionOfFund(f.getCIK(), f.getQuarter());
 		} catch (Exception e) {
 			e.printStackTrace();
+		}finally{
+			if(out != null){
+				try{
+					out.close();
+				}catch(Exception e){}
+			}
 		}
+		
+		DB.batchLoadHedgeFundHoldings(System.getProperty("user.dir")+ "/temp/temp.csv");
 	}
 
 	private void setPortionOfFund(CIK cik) {
-		BufferedWriter out;
+		BufferedWriter out = null;
 		try {
 			out = new BufferedWriter(new FileWriter("temp/temp.csv"));
 			Hashtable<Cusip, Double> cusipToShares = DB.getShares(cik, quarter);
@@ -432,67 +431,20 @@ public class SECData extends Data{
 				out.write(cusip + "," + fundConcentration + "," + quarter
 						+ " \n");
 			}
-			out.close();
 
 		} catch (IOException e) {
 			e.printStackTrace();
+		}finally{
+			if(out != null){
+				try{
+					out.close();
+				}catch(Exception e){}
+			}
 		}
 
 		DB.batchSetPortionOfFund(cik, System.getProperty("user.dir")
 				+ "/temp/temp.csv");
 	}
-
-	private void storeCUSIPTickerInDB(Cusip cusip, String tick, Quarter quarter) {
-		Lib.assertTrue(isValidQuarter(quarter));
-
-		DB databaseDb = DB.getInstance();
-		databaseDb.insertCusipTicker(cusip, tick, quarter);
-	}
-
-
-
-//	@SuppressWarnings("unchecked")
-//	private void storeCusips(Set<Cusip> cusips, Quarter quarterDir) {
-//
-//		Hashtable<Cusip, String> badCusipTicker = null;
-//
-//		try {
-//			badCusipTicker = (Hashtable<Cusip, String>) loadData(tempFolder
-//					+ "badCusipTicker.data");
-//		} catch (IOException e) {
-//			try {
-//				badCusipTicker = (Hashtable<Cusip, String>) loadData(tempFolder
-//						+ "badCusipTicker.data.temp");
-//			} catch (IOException e1) {
-//				e.printStackTrace();
-//			}
-//		}
-//
-//		if (badCusipTicker == null)
-//			badCusipTicker = new Hashtable<Cusip, String>();
-//
-//		System.out.println("Number stored badCusip " + badCusipTicker.size());
-//		// TODO had a check to see if there are a lot of badCusips
-//
-//		String tick;
-//		for (Cusip cusip : cusips) {
-//			if (DB.getTickerFromCusip(cusip, quarterDir) == null
-//					&& !badCusipTicker.containsKey(cusip)) {
-//				tick = getTicker(cusip);
-//				System.out.println(tick + " Cusip:" + cusip);
-//				if (!tick.equals("")) {
-//					storeCUSIPTickerInDB(cusip, tick, quarterDir);
-//				} else
-//					badCusipTicker.put(cusip, tick);
-//			}
-//		}
-//
-//		// save the data twice in case determination causes a EOFException
-//		saveData(tempFolder + "badCusipTicker.data.temp", badCusipTicker);
-//
-//		saveData(tempFolder + "badCusipTicker.data", badCusipTicker);
-//
-//	}
 	
 	private void saveData(String filename, Object obj) {
 		try {

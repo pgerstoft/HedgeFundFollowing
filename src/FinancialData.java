@@ -81,9 +81,10 @@ public class FinancialData extends Data{
 
 		String tick = getTicker(cusip);
 		
-		if(tick.isEmpty())
+		if(tick.isEmpty()){
+			//write to file!
 			return;
-		
+		}
 		String finacialStatement[] = { "CAS", "INC", "BAL" };
 		String dataFrequency[] = { "ANN", "INT" };
 		String financialFile = "";

@@ -2,6 +2,7 @@ import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Hashtable;
 
 
@@ -10,10 +11,13 @@ public class CRSPFileRead {
 	public static void parseFile(String file) {
 		System.out.println("CRSPFileRead: Parsing File...");
 		int colNumRET, colNumPRICE, colNumCusip, colNumDate;
+		BufferedReader in = null;
+		BufferedWriter out = null, out2 = null;
+		
 		try {
-			BufferedReader in = new BufferedReader(new FileReader(file));
-			BufferedWriter out = new BufferedWriter(new FileWriter("temp/temp.csv"));
-			BufferedWriter out2 = new BufferedWriter(new FileWriter("temp/temp1.csv"));
+			in = new BufferedReader(new FileReader(file));
+			out = new BufferedWriter(new FileWriter("temp/temp.csv"));
+			out2 = new BufferedWriter(new FileWriter("temp/temp1.csv"));
 			
 			String line = in.readLine();
 			
@@ -82,33 +86,46 @@ public class CRSPFileRead {
 //				DB.insertStockPriceReturn(cusip, price, monthlyReturn, date);
 			}
 			out.close();
-			in.close();
-			System.out.println("BatchLoading.....");
-			DB.batchLoadStockPrice(System.getProperty("user.dir") + "/temp/temp.csv");
-			DB.batchLoadCusipReturn(System.getProperty("user.dir") + "/temp/temp1.csv");
-			System.out.println("DONE");
+			
 			
 			
 			
 		} catch (Exception e) {
 			e.printStackTrace();
+		}finally{
+		    if (in != null) {
+		        try {
+		            in.close();
+		        } catch (IOException e) {
+		        }
+		    }
+		    if(out != null){
+		    	try {
+		            out.close();
+		        } catch (IOException e) {
+		        }
+		    }
+		    if(out2 != null){
+		    	try {
+		            out2.close();
+		        } catch (IOException e) {
+		        }
+		    }
 		}
+		
+		System.out.println("BatchLoading.....");
+		DB.batchLoadStockPrice(System.getProperty("user.dir") + "/temp/temp.csv");
+		DB.batchLoadCusipReturn(System.getProperty("user.dir") + "/temp/temp1.csv");
+		System.out.println("DONE");
+		
 	}
 
 	
 	//get column number
-	private static int getColNumRET(String header){ return getColNum(header, "ret");}
-	private static int getColNumPRC(String header){ return getColNum(header,"prc"); }
-	private static int getColNumCusip(String header) { return getColNum(header, "cusip"); } 
-	private static int getColNumDate(String header) { return getColNum(header, "date"); }
-	private static int getColNum(String header, String var){
-		int wordCount = 0;
-		for(String word : header.split(",")){
-			if(word.equalsIgnoreCase(var))
-				break;
-			wordCount++;
-		}
-		return wordCount;
-	}
+	private static int getColNumRET(String header){ return ReadCSVFile.getColNum(header, "ret");}
+	private static int getColNumPRC(String header){ return ReadCSVFile.getColNum(header,"prc"); }
+	private static int getColNumCusip(String header) { return ReadCSVFile.getColNum(header, "cusip"); } 
+	private static int getColNumDate(String header) { return ReadCSVFile.getColNum(header, "date"); }
+
 
 }

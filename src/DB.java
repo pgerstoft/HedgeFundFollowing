@@ -1,4 +1,5 @@
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileWriter;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -13,7 +14,7 @@ import java.util.Hashtable;
 public class DB {
 
 	private static String dbURL = "jdbc:mysql://localhost/myDB";
-
+	
 	private static String cusipTicker = "CUSIPTICKER";
 	private static String cusipTickerFields = "CUSIP char(9), "
 			+ "TICKER char(10), " + // Ticker length is longer than 4 to accommodate unusually
@@ -29,10 +30,11 @@ public class DB {
 			+ "QUARTER char(10), "
 			+ "PRIMARY KEY(CIK), "
 			+ "UNIQUE(FundName, QUARTER)";
-
+	
 	private static String hedgeFundHoldings = "HEDGEFUNDHOLDINGS";
 	private static String hedgeFundHoldingsFields = "CUSIP char(9), "
 			+ "CIK char(10), " + "VALUE float, " + "SHARES float, "
+			+ "PORTIONOFFUND float, "
 			+ "QUARTER char(10), "
 			+ "UNIQUE(CIK,CUSIP, QUARTER), "
 			+ "FOREIGN KEY(CIK) REFERENCES HEDGEFUND(CIK)";
@@ -40,9 +42,27 @@ public class DB {
 	private static String stockPrice = "STOCKPRICE";
 	private static String stockPriceFields = "CUSIP char(9), "
 		+ "PRICE float, "
-		+ "RET float, "
-		+ "DATE char(10), "
+		+ "MONTHLYRET float, "
+		+ "DATE char(8), "
 		+ "UNIQUE(CUSIP, DATE)";
+	
+	private static String cusipReturn = "CUSIPRETURN";
+	private static String cusipReturnFields = "CUSIP char(9), "
+		+ "RET float, "
+		+ "QUARTER char(10), "
+		+ "UNIQUE(CUSIP, QUARTER)";
+	
+	private static String cikReturn = "CIKRETURN";
+	private static String cikReturnFields = "CIK char(10), "
+		+ "RET float, "
+		+ "QUARTER char(10), "
+		+ "UNIQUE(CIK, QUARTER)";
+	
+	private static String tempShares = "TEMP_SHARES";
+	private static String tempSharesFields = "CUSIP char(9), "
+		+ "CSHOQ float, "
+		+ "QUARTER char(10), "
+		+ "UNIQUE(CUSIP, QUARTER)";
 	
 	private static Hashtable<String, String> tableNameToFields = new Hashtable<String, String>();
 	// Keep track of whether or not the table exists
@@ -53,11 +73,16 @@ public class DB {
 		tableNameToFields.put(hedgeFundHoldings, hedgeFundHoldingsFields);
 		tableNameToFields.put(cusipTicker, cusipTickerFields);
 		tableNameToFields.put(stockPrice, stockPriceFields);
+		tableNameToFields.put(cusipReturn, cusipReturnFields);
+		tableNameToFields.put(cikReturn, cikReturnFields);
+		tableNameToFields.put(tempShares, tempSharesFields);
 		
 		tableExists.put(cusipTicker, false);
 		tableExists.put(hedgeFund, false);
 		tableExists.put(hedgeFundHoldings, false);
 		tableExists.put(stockPrice, false);
+		tableExists.put(cusipReturn, false);
+		tableExists.put(cikReturn, false);
 	}
 
 	// jdbc Connection
@@ -116,8 +141,7 @@ public class DB {
 	private static void createTempSharesTable() {
 		try {
 			stmt = conn.createStatement();
-			stmt
-					.executeUpdate("CREATE TABLE TEMP_SHARES(CUSIP char(9), CSHOQ float, "
+			stmt.executeUpdate("CREATE TABLE TEMP_SHARES(CUSIP char(9), CSHOQ float, "
 							+ "QUARTER char(10),  UNIQUE(CUSIP, QUARTER))");
 		} catch (Exception e) {
 			handleException(e);
@@ -130,7 +154,7 @@ public class DB {
 			if (!tableExists(table))
 				createTable(table);
 			stmt = conn.createStatement();
-			stmt.execute("INSERT IGNORE INTO "+ table +" values ('" + values + "')");
+			stmt.execute("INSERT IGNORE INTO "+ table +" values (" + values + ")");
 			stmt.close();
 		} catch (Exception e) {
 			handleException(e);
@@ -138,8 +162,33 @@ public class DB {
 		closeConnection();
 	}
 	
+	private static void handleException(Exception e) {
+		closeConnection();
+		e.printStackTrace();
+		System.exit(1);
+	}
+
+	private static boolean tableExists(String table) {
+		if (tableExists.contains(table) && tableExists.get(table))
+			return true;
+
+		try {
+			DatabaseMetaData dbm = conn.getMetaData();
+			ResultSet rs = dbm.getTables(null, null, table.toUpperCase(), null);
+			if (!rs.next()) {
+				return false;
+			} else {
+				tableExists.put(table, true);
+				return true;
+			}
+		} catch (Exception e) {
+			handleException(e);
+		}
+		return true;
+	}
+	
 	public void insertTempSharesTable(Cusip cusip, double cshoq, Quarter quarter) {
-		insertValues("TEMP_SHARES", cusip + "', " + cshoq + " ," + "'" + quarter);
+		insertValues("TEMP_SHARES", "'"+cusip + "', " + cshoq + " ," + "'" + quarter+"'");
 	}
 
 	public static Hashtable<Cusip, Double> getSharesOustandingAllCusips(Quarter quarter) {
@@ -191,29 +240,6 @@ public class DB {
 		return cshoq;
 	}
 	
-	public static void selectSharesOutstanding() {
-		try {
-			createConnection();
-			stmt = conn.createStatement();
-			ResultSet results = stmt.executeQuery("select * from "
-					+ "TEMP_SHARES");
-
-			Cusip cusip;
-			double cshoq;
-			Quarter quarter;
-			while (results.next()) {
-				cusip = new Cusip(results.getString(1));
-				cshoq = results.getDouble(2);
-				quarter = new Quarter(results.getString(3));
-				System.out.println(cusip + " " + cshoq + " " + quarter);
-			}
-
-			results.close();
-		} catch (Exception e) {
-			handleException(e);
-		}
-		closeConnection();
-	}
 
 	public static void createTempCusipTable() {
 		try {
@@ -231,7 +257,7 @@ public class DB {
 		try {
 			createConnection();
 			stmt = conn.createStatement();
-			stmt.execute("INSERT INTO TEMP values ('" + cusip + "' )");
+			stmt.execute("INSERT IGNORE INTO TEMP values ('" + cusip + "' )");
 		} catch (Exception e) {
 			handleException(e);
 		}
@@ -243,13 +269,15 @@ public class DB {
 		try {
 			createConnection();
 			stmt = conn.createStatement();
-			ResultSet results = stmt.executeQuery("select * from TEMP");
+			new File("tempCusips2.txt").delete();
+			stmt.executeQuery("select DISTINCT CUSIP from TEMP_SHARES INTO OUTFILE '" + System.getProperty("user.dir")+ "/tempCusips2.txt'");
+//			stmt.executeQuery("select * from TEMP INTO OUTFILE '" + System.getProperty("user.dir")+ "/tempCusips2.txt'");
 
-			BufferedWriter out = new BufferedWriter(new FileWriter(
-					"tempCusip.txt"));
-			while (results.next())
-				out.write(results.getString(1) + "\n");
-			out.close();
+//			BufferedWriter out = new BufferedWriter(new FileWriter(
+//					"tempCusip.txt"));
+//			while (results.next())
+//				out.write(results.getString(1) + "\n");
+//			out.close();
 		} catch (Exception e) {
 			handleException(e);
 		}
@@ -269,35 +297,12 @@ public class DB {
 		closeConnection();
 	}
 
-	private static void handleException(Exception e) {
-		closeConnection();
-		e.printStackTrace();
-		System.exit(1);
-	}
 
-	private static boolean tableExists(String table) {
-		if (tableExists.contains(table) && tableExists.get(table))
-			return true;
-
-		try {
-			DatabaseMetaData dbm = conn.getMetaData();
-			ResultSet rs = dbm.getTables(null, null, table.toUpperCase(), null);
-			if (!rs.next()) {
-				return false;
-			} else {
-				tableExists.put(table, true);
-				return true;
-			}
-		} catch (Exception e) {
-			handleException(e);
-		}
-		return true;
-	}
 
 	public void insertHedgeFund(CIK cik, String fundName, Quarter quarter, String fileName) {
 		fundName = fundName.replaceAll("'", "");
 		fundName = fundName.replace("\\", "");
-		insertValues(hedgeFund,cik + "'," 
+		insertValues(hedgeFund, "'"+cik + "'," 
 				+ "'" + fundName + "', "
 				+ "0, "
 				+ "'" + fileName +"', "
@@ -324,141 +329,14 @@ public class DB {
 	}
 	
 	public void insertHedgeFundHoldings(Cusip cusip, CIK cik, double value,
-			double shares, Quarter quarter) {
+			double shares, double portionOfFund, Quarter quarter) {
 		
 		insertValues(hedgeFundHoldings, cusip + "','" + cik + "'," + value + ","
-					+ shares + ",'" + quarter);
+					+ shares + "," + portionOfFund + "'" + quarter);
 	}
 
 	public void insertCusipTicker(Cusip cusip, String tick, Quarter quarter) {
-		insertValues(cusipTicker, cusip + "','" + tick + "','" + quarter);
-	}
-
-	public static void select50HedgeFunds() {
-		try {
-			createConnection();
-			stmt = conn.createStatement();
-			stmt.setMaxRows(50);
-			ResultSet results = stmt.executeQuery("select * from " + hedgeFund);
-			ResultSetMetaData rsmd = results.getMetaData();
-			int numberCols = rsmd.getColumnCount();
-			for (int i = 1; i <= numberCols; i++) {
-				// print Column Names
-				System.out.print(rsmd.getColumnLabel(i) + "\t\t");
-			}
-
-			System.out
-					.println("\n-------------------------------------------------");
-
-			while (results.next()) {
-				CIK cik = new CIK(results.getString(1));
-				String fundName = results.getString(2);
-				System.out.println(cik + "\t\t" + fundName);
-			}
-
-			results.close();
-
-		} catch (Exception e) {
-			handleException(e);
-		}
-		closeConnection();
-	}
-
-	public static void select50HedgeFundsHoldings() {
-		try {
-			createConnection();
-			stmt = conn.createStatement();
-			stmt.setMaxRows(2000);
-			ResultSet results = stmt.executeQuery("select * from "
-					+ hedgeFundHoldings + " WHERE CUSIP = '002824100'");
-			ResultSetMetaData rsmd = results.getMetaData();
-			int numberCols = rsmd.getColumnCount();
-			for (int i = 1; i <= numberCols; i++) {
-				// print Column Names
-				System.out.print(rsmd.getColumnLabel(i) + "\t\t\t");
-			}
-
-			System.out
-					.println("\n-------------------------------------------------");
-			Cusip cusip;
-			CIK cik;
-			double value;
-			double shares;
-			Quarter quarterDir;
-			while (results.next()) {
-				cusip = new Cusip(results.getString(1));
-				cik = new CIK(results.getString(2));
-				value = results.getDouble(3);
-				shares = results.getDouble(4);
-				quarterDir = new Quarter(results.getString(5));
-				System.out.println(cusip + "\t\t" + cik + "\t\t" + value
-						+ "\t\t" + shares + "\t\t\t" + quarterDir);
-			}
-
-			results.close();
-		} catch (Exception e) {
-			handleException(e);
-		}
-		closeConnection();
-	}
-
-	public static void select50CusipTicker() {
-		try {
-			createConnection();
-			stmt = conn.createStatement();
-			stmt.setMaxRows(50);
-			ResultSet results = stmt.executeQuery("select * from "
-					+ cusipTicker);
-			ResultSetMetaData rsmd = results.getMetaData();
-			int numberCols = rsmd.getColumnCount();
-			for (int i = 1; i <= numberCols; i++) {
-				// print Column Names
-				System.out.print(rsmd.getColumnLabel(i) + "\t\t\t");
-			}
-
-			System.out
-					.println("\n-------------------------------------------------");
-			Cusip cusip;
-			String tick;
-			Quarter quarterDir;
-			while (results.next()) {
-				cusip = new Cusip(results.getString(1));
-				tick = results.getString(2);
-				quarterDir = new Quarter(results.getString(5));
-				System.out.println(cusip + "\t\t" + tick + "\t\t\t"
-						+ quarterDir);
-			}
-
-			results.close();
-		} catch (Exception e) {
-			handleException(e);
-		}
-	}
-
-	public static void outputAllTables() {
-		try {
-			createConnection();
-			DatabaseMetaData dbmd = conn.getMetaData();
-
-			// Specify the type of object; in this case we want tables
-			String[] types = { "TABLE" };
-			ResultSet res = dbmd.getTables(null, null, null, types);
-
-			// Get the table names
-			while (res.next()) {
-				// Get the table name
-				System.out.println("   " + res.getString("TABLE_CAT") + ", "
-						+ res.getString("TABLE_SCHEM") + ", "
-						+ res.getString("TABLE_NAME") + ", "
-						+ res.getString("TABLE_TYPE") + ", "
-						+ res.getString("REMARKS"));
-			}
-			res.close();
-		} catch (Exception e) {
-			closeConnection();
-			e.printStackTrace();
-		}
-		closeConnection();
+		insertValues(cusipTicker, "'"+cusip + "','" + tick + "','" + quarter+"'");
 	}
 
 	public static String getTickerFromCusip(Cusip cusip, Quarter quarter) {
@@ -484,6 +362,27 @@ public class DB {
 
 	}
 
+	public static Cusip getCusipFromTicker(String tick, Quarter quarter) {
+		Cusip cusip = null;
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+
+			ResultSet results = stmt.executeQuery("SELECT CUSIP "
+					+ "FROM "+cusipTicker+" " + "WHERE TICKER = '"
+					+ tick + "' AND QUARTER = '" + quarter +"'");
+
+			if (results.next()) {
+				cusip =  new Cusip(results.getString(1));
+			}
+			Lib.assertTrue(!results.next());
+			closeConnection();
+		} catch (Exception e) {
+			handleException(e);
+		}
+		return cusip;
+	}
+	
 	// returns all CUSIPs from that quarter
 	public static ArrayList<Cusip> getCusips(Quarter quarter) {
 		ArrayList<Cusip> cusips = new ArrayList<Cusip>();
@@ -493,14 +392,35 @@ public class DB {
 			if (!tableExists(cusipTicker))
 				return cusips;
 			stmt = conn.createStatement();
-			ResultSet results = stmt.executeQuery("select CUSIP from "
+			ResultSet results = stmt.executeQuery("select CUSIP, TICKER from "
 					+ cusipTicker + " WHERE QUARTER = '" + quarter + "'");
 			while (results.next())
 				cusips.add(new Cusip(results.getString(1)));
 
 			closeConnection();
 
-			return cusips;
+		} catch (Exception e) {
+			handleException(e);
+		}
+		return cusips;
+	}
+	
+	// returns all CUSIPs from that quarter
+	public static ArrayList<Cusip> getCusipsFromCusipReturn(Quarter quarter) {
+		ArrayList<Cusip> cusips = new ArrayList<Cusip>();
+		try {
+
+			createConnection();
+			if (!tableExists(cusipTicker))
+				return cusips;
+			stmt = conn.createStatement();
+			ResultSet results = stmt.executeQuery("select CUSIP from "
+					+ cusipReturn + " WHERE QUARTER = '" + quarter + "'");
+			while (results.next())
+				cusips.add(new Cusip(results.getString(1)));
+
+			closeConnection();
+
 		} catch (Exception e) {
 			handleException(e);
 		}
@@ -587,67 +507,6 @@ public class DB {
 
 	}
 
-	public static void outputNumSharesHeldByFunds(Quarter quarter) {
-		try {
-
-			createConnection();
-			stmt = conn.createStatement();
-			ResultSet results = stmt.executeQuery("select CUSIP, SHARES from "
-					+ cusipTicker + " C, " + hedgeFundHoldings
-					+ " H WHERE C.QUARTER = '" + quarter + "' AND "
-					+ "C.CUSIP = H.CUSIP ");
-			String tick = "";
-			double summedShares = 0;
-			while (results.next()) {
-				tick = results.getString(1);
-				summedShares = results.getDouble(2);
-				System.out.println(tick + " " + summedShares);
-			}
-			closeConnection();
-		} catch (Exception e) {
-			handleException(e);
-		}
-
-	}
-
-	public static void getNumberOfHoldings(String CIK, Quarter quarter) {
-		try {
-
-			createConnection();
-			stmt = conn.createStatement();
-			ResultSet results = stmt.executeQuery("SELECT count(*) " + "FROM "
-					+ hedgeFundHoldings + " " + "WHERE CIK = '" + CIK + "' "
-					+ "AND QUARTER = '" + quarter + "'");
-
-			while (results.next()) {
-
-				System.out.println(results.getString(1));
-			}
-			closeConnection();
-		} catch (Exception e) {
-			handleException(e);
-		}
-	}
-
-	public static Cusip getCusipFromTicker(String tick, Quarter quarter) {
-		Cusip cusip = null;
-		try {
-			stmt = conn.createStatement();
-
-			ResultSet results = stmt.executeQuery("SELECT CUSIP "
-					+ "FROM "+cusipTicker+" " + "WHERE TICKER = '"
-					+ tick + "' AND QUARTER = '" + quarter +"'");
-
-			if (results.next()) {
-				cusip =  new Cusip(results.getString(1));
-			}
-			Lib.assertTrue(!results.next());
-
-		} catch (Exception e) {
-			handleException(e);
-		}
-		return cusip;
-	}
 
 	public void getNumberOfHedgeFundHoldingTicker(String tick,
 			int minNumHoldings, int maxNumHoldings, Quarter quarter) {
@@ -1044,7 +903,7 @@ public class DB {
 		try {
 			createConnection();
 			stmt = conn.createStatement();
-		ResultSet results = stmt.executeQuery("SELECT DATE, RET" +
+		ResultSet results = stmt.executeQuery("SELECT DATE, MONTHLYRET" +
 				"FROM " + stockPrice + " " +
 				"WHERE CUSIP = '"+ cusip  + "' ");
 
@@ -1052,7 +911,6 @@ public class DB {
 			dateToReturn.put(new Date(results.getString(1)), results.getDouble(2));
 		}
 		
-		Lib.assertTrue(!results.next());
 		closeConnection();
 
 	} catch (Exception e) {
@@ -1062,7 +920,287 @@ public class DB {
 	
 	return dateToReturn;
 	}
+
+	public static void setThreeMonthStockReturn(Cusip cusip,
+			Hashtable<Quarter, Double> quarterToFutureReturn) {
+		for(Quarter q: quarterToFutureReturn.keySet()){
+			setThreeMonthStockReturn(cusip, quarterToFutureReturn.get(q), q);
+		}
+		
+	}
+	
+	public static void setThreeMonthStockReturn(Cusip cusip, double ret, Quarter quarter){
+		insertValues(cusipReturn,"'"+cusip+ "', "+ ret+", '"+ quarter+"'");
+	}
+	
+	public static Hashtable<Quarter, Double> getThreeMonthStockReturn(Cusip cusip){
+		Hashtable<Quarter, Double> quarterToReturn = new  Hashtable<Quarter, Double>();
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+		ResultSet results = stmt.executeQuery("SELECT Quarter, RET " +
+				"FROM " + cusipReturn + " " +
+				"WHERE CUSIP = '"+ cusip  + "' ");
+
+		while(results.next()){
+			quarterToReturn.put(new Quarter(results.getString(1)), results.getDouble(2));
+		}
+		
+		closeConnection();
+
+	} catch (Exception e) {
+		handleException(e);
+	}
 	
 	
+	return quarterToReturn;
+
+	}
+	
+	public static double getThreeMonthStockReturn(Cusip cusip, Quarter quarter){
+		double ret = 0.0;
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+		ResultSet results = stmt.executeQuery("SELECT Quarter, RET " +
+				"FROM " + cusipReturn + " " +
+				"WHERE CUSIP = '"+ cusip  + "' " +
+				"AND QUARTER = '"+ quarter + "'");
+
+		if(results.next()){
+			ret = results.getDouble(2);
+		}
+		Lib.assertTrue(!results.next());
+		
+		closeConnection();
+
+	} catch (Exception e) {
+		handleException(e);
+	}
+	
+	
+	return ret;
+
+	}
+	
+	
+	private static void batchLoad(String table, String filename){
+		try { 
+			createConnection();
+			if (!tableExists(table))
+				createTable(table);
+
+			Statement stmt = conn.createStatement(); 
+
+			// Load the data 
+			stmt.executeUpdate("LOAD DATA local INFILE '" + filename + "' IGNORE INTO TABLE " + table + " FIELDS TERMINATED BY ','" +
+					" LINES TERMINATED BY '\n'"); 
+
+			closeConnection();
+			} catch (Exception e) { 
+				handleException(e);
+			} 
+	}
+
+	public static void batchLoadStockPrice(String filename){
+		batchLoad(stockPrice, filename);
+	}
+	
+	public static void batchLoadCusipReturn(String filename){
+		batchLoad(cusipReturn, filename);
+	}
+	
+	public static void batchLoadCIKReturn(String filename){
+		batchLoad(cikReturn, filename);
+	}
+	
+	public static Hashtable<Cusip, Double> getShares(CIK cik, Quarter quarter){
+		Hashtable<Cusip, Double> cusipToShares = new Hashtable<Cusip, Double>();
+		try {
+
+			createConnection();
+			stmt = conn.createStatement();
+
+			ResultSet results = stmt.executeQuery("SELECT CUSIP, SHARES  "
+					+ "FROM HEDGEFUNDHOLDINGS H "
+					+ "WHERE QUARTER = '" + quarter+ "' " +
+							"AND CIK = '"+ cik + "'" );
+			while (results.next()) {
+
+				cusipToShares.put(new Cusip(results.getString(1)), results.getDouble(2));
+			}
+			closeConnection();
+
+		} catch (Exception e) {
+			handleException(e);
+		}
+		
+		return cusipToShares;
+	}
+	
+	public static double getFundValue(CIK cik, Quarter quarter){
+		double value = 0.0;
+		try {
+
+			createConnection();
+			stmt = conn.createStatement();
+
+			ResultSet results = stmt.executeQuery("SELECT SUM(VALUE) "
+					+ "FROM HEDGEFUNDHOLDINGS H "
+					+ "WHERE QUARTER = '" + quarter+ "' " +
+							"AND CIK = '"+ cik + "'" );
+			if (results.next()) {
+
+				value = results.getDouble(1);
+			}
+			Lib.assertTrue(!results.next());
+			closeConnection();
+
+		} catch (Exception e) {
+			handleException(e);
+		}
+		
+		return value;
+	}
+
+	public static void batchSetPortionOfFund(CIK cik, String filename){
+		try { 
+			createConnection();
+			Statement stmt = conn.createStatement(); 
+			
+			stmt.execute("CREATE TEMPORARY TABLE temp_data(CUSIP char(9), PORTIONOFFUND float, " +
+					"QUARTER char(10)) ;");			
+			// Load the data 
+			stmt.execute("LOAD DATA local INFILE '" + filename + "' " +
+					"INTO TABLE temp_data " +
+					" FIELDS TERMINATED BY ','" +
+					" LINES TERMINATED BY '\n'"); 
+
+			stmt.execute("UPDATE "+ hedgeFundHoldings + " H , temp_data T " +
+					"SET H.PORTIONOFFUND = T.PORTIONOFFUND " +
+					"WHERE H.CUSIP = T.CUSIP AND " +
+					"H.CIK = '" + cik + "' AND " +
+					"H.QUARTER = T.QUARTER" );
+			closeConnection();
+			} catch (Exception e) { 
+				handleException(e);
+			} 
+	}
+	
+	public static void batchSetFundReturn(String filename){
+		try { 
+			createConnection();
+			
+			if(!tableExists(cikReturn))
+				createTable(cikReturn);
+			Statement stmt = conn.createStatement(); 
+			stmt.execute("DROP TABLE temp_data");
+			stmt.execute("CREATE TEMPORARY TABLE temp_data(CIK char(10), RET float, " +
+					"QUARTER char(10)) ;");			
+			// Load the data 
+			stmt.execute("LOAD DATA local INFILE '" + filename + "' " +
+					"INTO TABLE temp_data " +
+					" FIELDS TERMINATED BY ','" +
+					" LINES TERMINATED BY '\n'"); 
+
+			stmt.execute("UPDATE "+ cikReturn + " H , temp_data T" +
+					"SET H.RET = T.RET " +
+					"WHERE H.CIK = T.CIK AND H.QUARTER = T.QUARTER" );
+			closeConnection();
+			} catch (Exception e) { 
+				handleException(e);
+			} 
+	}
+	
+	public static double getPortionOfFund(CIK cik, Cusip cusip, Quarter quarter){
+		double portionOfFund = 0.0;
+		try {
+
+			createConnection();
+			stmt = conn.createStatement();
+
+			ResultSet results = stmt.executeQuery("SELECT PORTIONOFFUND "
+					+ "FROM HEDGEFUNDHOLDINGS " 
+					+ "WHERE QUARTER = '" + quarter + "' " 
+					+ "AND CUSIP = '" + cusip + "' " 
+					+ "AND CIK = '" + cik + "'");
+			if (results.next()) 
+				portionOfFund = results.getDouble(1);
+			
+			Lib.assertTrue(!results.next());
+			closeConnection();
+
+		} catch (Exception e) {
+			handleException(e);
+		}
+
+		return portionOfFund;
+		
+	}
+
+	public static void batchLoadHedgeFundHoldings(String filename) {
+		batchLoad(hedgeFundHoldings, filename);
+	}
+	
+
+	public static void makeDesignTemp(String file, Quarter startQuarter, Quarter endQuarter){
+		try {
+
+			createConnection();
+			stmt = conn.createStatement();
+
+			stmt = conn.createStatement();
+
+			System.out.println("SELECT CUSIP, H.QUARTER, CIK, PORTIONOFFUND " +
+					//", RET " +
+					"FROM HEDGEFUNDHOLDINGS H " +
+			//		"JOIN CUSIPTICKER C ON (C.CUSIP = H.CUSIP AND C.QUARTER = H.QUARTER) " +
+		//"JOIN CUSIPRETURN S ON (H.CUSIP = S.CUSIP AND S.QUARTER = H.QUARTER) " +
+		" WHERE STRCMP(H.QUARTER, '" + startQuarter + "') = 1" +
+		//" OR STRCMP(H.QUARTER, '" + startQuarter + "') = 0  "+
+		" AND STRCMP(H.QUARTER, '"+ endQuarter +"') = -1 " +
+		" ORDER BY  CUSIP, QUARTER " +
+		" INTO OUTFILE '"+ file + "'" +
+		"  FIELDS TERMINATED BY ','");
+			stmt.executeQuery("SELECT CUSIP, H.QUARTER, CIK, PORTIONOFFUND " +
+					//", RET " +
+					"FROM HEDGEFUNDHOLDINGS H " +
+			//		"JOIN CUSIPTICKER C ON (C.CUSIP = H.CUSIP AND C.QUARTER = H.QUARTER) " +
+		//"JOIN CUSIPRETURN S ON (H.CUSIP = S.CUSIP AND S.QUARTER = H.QUARTER) " +
+		" WHERE STRCMP(H.QUARTER, '" + startQuarter + "') = 1" +
+		//" OR STRCMP(H.QUARTER, '" + startQuarter + "') = 0  "+
+		" AND STRCMP(H.QUARTER, '"+ endQuarter +"') = -1 " +
+		" ORDER BY  CUSIP, QUARTER " +
+		" INTO OUTFILE '"+ file + "'" +
+		"  FIELDS TERMINATED BY ','");
+			
+		closeConnection();
+
+		} catch (Exception e) {
+			handleException(e);
+		}
+	}
+
+	public static void batchLoadSharesOutstanding(String file) {
+		batchLoad(tempShares, file);		
+	}
+
+	public static void batchLoadCusipTickers(String file) {
+		batchLoad(cusipTicker, file);
+	}
+	
+	
+	public static void deleteRowsIfCusipNotInCusipTicker(){
+		try {
+			createConnection();
+			stmt = conn.createStatement();
+			stmt.executeUpdate("DELETE FROM " + hedgeFundHoldings +  " H WHERE NOT EXISTS "
+							+" (SELECT * FROM " + cusipTicker + "C " +
+									"WHERE H.CUSIP = C.CUSIP");
+		} catch (Exception e) {
+			handleException(e);
+		}
+		closeConnection();
+	}
 	
 }
