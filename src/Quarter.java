@@ -50,12 +50,25 @@ public class Quarter implements Comparable<Quarter>{
 		int newYear = year;
 		if(newQuarter == 1){
 			newQuarter = 4;
-			newYear = 1;
+			newYear--;
 		}
 		else
 			newQuarter--;
 		
 		return new Quarter(newYear, newQuarter, true); //maybe bad practice
+	}
+	
+	public Quarter getNextQuarter(){
+		int newQuarter = quarter;
+		int newYear = year;
+		if(newQuarter == 4){
+			newQuarter = 1;
+			newYear++;
+		}
+		else
+			newQuarter++;
+		
+		return new Quarter(newYear, newQuarter, true);
 	}
 	
 	public String toString(){
