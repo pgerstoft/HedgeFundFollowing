@@ -82,10 +82,10 @@ public class DataAnalysis {
 	public void makeDesignMatrixCSV(Quarter predictionQuarter, int numTrainingQuarters){
 		
 		//TODO move file before you write, input file to makeDesigntemp
-		String tempTrainFile = "temp/tempTrainDesignMatrix2.csv";
-		String tempTestFile  = "temp/tempTestDesignMatrix2.csv";
-		String designMatrixTrain = "designMatrixTrain2.arff";
-		String designMatrixTest = "designMatrixTest2.arff";
+		String tempTrainFile = "temp/tempTrainDesignMatrix.csv";
+		String tempTestFile  = "temp/tempTestDesignMatrix.csv";
+		String designMatrixTrain = "designMatrixTrain.arff";
+		String designMatrixTest = "designMatrixTest.arff";
 		//set allParts of writeable to true
 		new File(System.getProperty("user.dir")+"/temp/").setWritable(true);
 		
@@ -354,13 +354,17 @@ public class DataAnalysis {
 					quarter = newQuarter;
 					cik = new CIK(ReadCSVFile.getValue(line, colNumCIK));
 					portionOfFund = new Double(ReadCSVFile.getValue(line, colNumPOF));
-					if(cikToIndex.get(cik) != null)
-						portionOfFunds.put((cikToIndex.get(cik)), ""+ portionOfFund);
+					if(cikToIndex.get(cik) != null){
+						if(portionOfFund > .05)
+							portionOfFunds.put((cikToIndex.get(cik)), ""+ portionOfFund);
+					}
 				}else{
 					cik = new CIK(ReadCSVFile.getValue(line, colNumCIK));
 					portionOfFund = new Double(ReadCSVFile.getValue(line, colNumPOF));
-					if(cikToIndex.get(cik) != null)
-						portionOfFunds.put((cikToIndex.get(cik)), ""+ portionOfFund);
+					if(cikToIndex.get(cik) != null){
+						if(portionOfFund > .05) 
+							portionOfFunds.put((cikToIndex.get(cik)), ""+ portionOfFund);
+					}
 				}
 			}
 		}catch(Exception e){
