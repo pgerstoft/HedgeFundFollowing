@@ -1,0 +1,206 @@
+-----BEGIN PRIVACY-ENHANCED MESSAGE-----
+Proc-Type: 2001,MIC-CLEAR
+Originator-Name: webmaster@www.sec.gov
+Originator-Key-Asymmetric:
+ MFgwCgYEVQgBAQICAf8DSgAwRwJAW2sNKK9AVtBzYZmr6aGjlWyK3XmZv3dTINen
+ TWSM7vrzLADbmYQaionwg5sDW3P6oaM5D3tdezXMm7z1T+B+twIDAQAB
+MIC-Info: RSA-MD5,RSA,
+ TbW4VDjGsZtg4knrClcUP8Pk97g0zUCuTO4H8DI3POMlwxL6QZOjxxsSNA9eM7FA
+ a5TMQA508Ih0gU3D7iYVaw==
+
+<SEC-DOCUMENT>0000911084-10-000001.txt : 20100202
+<SEC-HEADER>0000911084-10-000001.hdr.sgml : 20100202
+<ACCEPTANCE-DATETIME>20100202162833
+ACCESSION NUMBER:		0000911084-10-000001
+CONFORMED SUBMISSION TYPE:	13F-HR
+PUBLIC DOCUMENT COUNT:		1
+CONFORMED PERIOD OF REPORT:	20091231
+FILED AS OF DATE:		20100202
+DATE AS OF CHANGE:		20100202
+EFFECTIVENESS DATE:		20100202
+
+FILER:
+
+	COMPANY DATA:	
+		COMPANY CONFORMED NAME:			GANUCHEAU CAPITAL MANAGEMENT, INC.
+		CENTRAL INDEX KEY:			0000911084
+		IRS NUMBER:				752508383
+		STATE OF INCORPORATION:			DE
+		FISCAL YEAR END:			1231
+
+	FILING VALUES:
+		FORM TYPE:		13F-HR
+		SEC ACT:		1934 Act
+		SEC FILE NUMBER:	028-03880
+		FILM NUMBER:		10567279
+
+	BUSINESS ADDRESS:	
+		STREET 1:		301 COMMERCE STREET, SUITE 1470
+		CITY:			FORT WORTH
+		STATE:			TX
+		ZIP:			76102
+		BUSINESS PHONE:		8173329915
+
+	MAIL ADDRESS:	
+		STREET 1:		301 COMMERCE STREET, SUITE 1470
+		CITY:			FORT WORTH
+		STATE:			TX
+		ZIP:			76102
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	GANUCHEAU PARTNERS, INC.
+		DATE OF NAME CHANGE:	20041112
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	GSB INVESTMENT MANAGEMENT INC
+		DATE OF NAME CHANGE:	19990329
+</SEC-HEADER>
+<DOCUMENT>
+<TYPE>13F-HR
+<SEQUENCE>1
+<FILENAME>table.txt
+<DESCRIPTION>TABLE
+<TEXT>
+TYPE			13F-HR
+
+PERIOD			12/31/09
+
+FILER
+	CIK		0000911084
+	CCC		@JHQ4ETO
+
+SUBMISSION-CONTACT
+	NAME		FRANK P. GANUCHEAU
+	PHONE		817-332-9915
+
+				   UNITED STATES
+			SECURITIES AND EXCHANGE COMMISSION
+				WASHINGTON, D.C. 20549
+
+				     FORM 13-F
+
+			        FORM 13-F COVERPAGE
+
+REPORT FOR THE CALENDAR QUARTER ENDED: DECEMBER 31, 2009
+
+CHECK HERE IF AMENDMENT [ ]; AMENDMENT NUMBER: [ ]
+THIS AMENDMENT (CHECK ONE):  [ ] IS A RESTATEMENT
+			     [ ] ADDS NEW HOLDING ENTRIES
+
+INSTITUTIONAL INVESTMENT MANAGER FILING THIS REPORT:
+
+NAME:     GANUCHEAU CAPITAL MANAGEMENT, INC.
+ADDRESS:  301 COMMERCE STREET, SUITE 1470
+	  FORT WORTH, TEXAS 76102
+
+13F FILE NUMBER: 28-3880
+
+THE INSTITUTIONAL INVESTMENT MANAGER FILING THIS REPORT AND THE PERSON BY WHOM
+IT IS SIGNED HEREBY REPRESENT THAT THE PERSON SIGNING THE REPORT IS AUTHORIZED
+TO SUBMIT IT, THAT ALL INFORMATION CONTAINED HEREIN IS TRUE, CORRECT AND
+COMPLETE TO THE BEST OF THAT PERSON'S KNOWLEDGE, AND THAT IT IS UNDERSTOOD THAT
+ALL REQUIRED ITEMS, STATEMENTS, SCHEDULES, LISTS, AND TABLES, ARE CONSIDERED
+INTEGRAL PARTS OF THIS FORM.
+
+PERSON SIGNING REPORT ON BEHALF OF REPORTING MANAGER:
+
+
+NAME:  FRANK P. GANUCHEAU, CFA
+TITLE: PRINCIPAL
+PHONE: 817-332-9915
+
+
+SIGNATURE, PLACE, AND DATE OF SIGNING:
+FRANK P. GANUCHEAU     FORT WORTH, TEXAS   FEBRUARY 2, 2010
+
+THIS FILING IS NOT REQUIRED BECAUSE DISCRETIONARY EQUITY ASSETS UNDER MANAGEMENT
+WERE BELOW THE FILING REQUIREMENT OF $100 MILLION EFFECTIVE WITH FILING AS OF
+JUNE 30, 2002.  PLEASE DISREGARD FILINGS MADE FROM DECEMBER 31, 2003 THROUGH
+DECEMBER 31, 2009.
+
+REPORT TYPE (CHECK ONLY ONE):
+
+[X] 13 F HOLDINGS REPORT
+[ ] 13 F NOTICE
+[ ] 13 F COMBINATION REPORT
+
+
+LIST OF OTHER MANAGERS REPORTING FOR THIS MANAGER:
+
+NONE.
+
+
+I AM SIGNING THIS REPORT AS REQUIRED BY THE SECURITIES AND EXCHANGE ACT OF
+1934.
+
+REPORT SUMMARY:
+
+NUMBER OF OTHER INCLUDED MANAGERS: 0
+
+FORM 13F INFORMATION TABLE ENTRY TOTAL:  51 ENTRIES
+
+FORM 13F INFORMATION TABLE VALUE TOTAL:  $28,106(x$1000)
+LIST OF OTHER MANAGERS:
+NONE.
+<TABLE>
+                                                                  FORM 13F INFORMATION TABLE
+                                                           VALUE   SHARES/  SH/ PUT/ INVSTMT    OTHER          VOTING AUTHORITY
+        NAME OF ISSUER          TITLE OF CLASS    CUSIP   (x$1000) PRN AMT  PRN CALL DSCRETN   MANAGERS     SOLE    SHARED    NONE
+- ------------------------------ ---------------- --------- -------- -------- --- ---- ------- ------------ -------- -------- --------
+<S>                            <C>              <C>       <C>      <C>      <C> <C>  <C>     <C>          <C>      <C>      <C>
+ACTIVISION BLIZZARD INC        COM              00507V109      654    58885 SH       Sole                    37495             21390
+                                                                34     3035 SH       Other                                      3035
+APPLE INC                      COM              037833100     1237     5871 SH       Sole                     3746              2125
+                                                                63      300 SH       Other                                       300
+BANK OF AMERICA                COM              060505104      379    25135 SH       Sole                    15995              9140
+                                                                20     1295 SH       Other                                      1295
+BERKSHIRE HATHAWAY CL B        COM              084670207     1850      563 SH       Sole                      368               195
+                                                                92       28 SH       Other                                        28
+CENTRAL FD OF CANADA LTD CL A  COM              153501101      138    10000 SH       Sole                    10000
+CHUBB CORP                     COM              171232101     1141    23205 SH       Sole                    14800              8405
+                                                                59     1195 SH       Other                                      1195
+CITIGROUP INC                  COM              172967101      386   116630 SH       Sole                    74235             42395
+                                                                20     6010 SH       Other                                      6010
+COVIDIEN LTD                   COM              G2554F105     1009    21079 SH       Sole                    13367              7712
+                                                                30      618 SH       Other                                       618
+EMERSON ELECTRIC               COM              291011104     1300    30505 SH       Sole                    19345             11160
+                                                                66     1560 SH       Other                                      1560
+FIDELITY NATL FINL             COM              31620R105     1084    80560 SH       Sole                    51400             29160
+                                                                56     4145 SH       Other                                      4145
+GAMESTOP CORP                  COM              36467W109      815    37125 SH       Sole                    23640             13485
+                                                                42     1910 SH       Other                                      1910
+GOOGLE INC CL A                COM              38259p508      961     1550 SH       Sole                      975               575
+                                                                50       80 SH       Other                                        80
+JOHNSON & JOHNSON              COM              478160104     2192    34028 SH       Sole                    21975             12053
+                                                               103     1600 SH       Other                                      1600
+JPMORGAN CHASE                 COM              46625h100      385     9250 SH       Sole                     5885              3365
+                                                                20      475 SH       Other                                       475
+KRAFT FOODS INC                COM              50075n104     1041    38307 SH       Sole                    24122             14185
+                                                                58     2145 SH       Other                                      2145
+L-3 COMMUN HLDGS               COM              502424104     1159    13333 SH       Sole                     8383              4950
+                                                                60      690 SH       Other                                       690
+PAYCHEX INC                    COM              704326107     1222    39880 SH       Sole                    25425             14455
+                                                                63     2050 SH       Other                                      2050
+PHILIP MORRIS INTL             COM              718172109     2110    43788 SH       Sole                    27483             16305
+                                                               149     3100 SH       Other                                      3100
+SPDR GOLD TRUST                COM              78463V107     1444    13455 SH       Sole                     9835              3620
+                                                                55      515 SH       Other                                       515
+ST JUDE MEDICAL                COM              790849103      897    24395 SH       Sole                    15345              9050
+                                                                44     1200 SH       Other                                      1200
+STATE STREET CORP              COM              857477103      409     9390 SH       Sole                     5980              3410
+                                                                21      485 SH       Other                                       485
+STRYKER CORP                   COM              863667101     1172    23263 SH       Sole                    14668              8595
+                                                                56     1110 SH       Other                                      1110
+VODAFONE GRP PLC               COM              92857W209     1149    49750 SH       Sole                    31735             18015
+                                                                59     2560 SH       Other                                      2560
+WAL-MART STORES                COM              931142103     1223    22880 SH       Sole                    14515              8365
+                                                                63     1175 SH       Other                                      1175
+WELLS FARGO & CO               COM              949746101      386    14305 SH       Sole                     9100              5205
+                                                                20      740 SH       Other                                       740
+ZIMMER HLDGS INC               COM              98956p102     1012    17115 SH       Sole                    10870              6245
+                                                                49      825 SH       Other                                       825
+</TABLE>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>
+-----END PRIVACY-ENHANCED MESSAGE-----

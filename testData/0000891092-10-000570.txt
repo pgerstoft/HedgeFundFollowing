@@ -1,0 +1,193 @@
+-----BEGIN PRIVACY-ENHANCED MESSAGE-----
+Proc-Type: 2001,MIC-CLEAR
+Originator-Name: webmaster@www.sec.gov
+Originator-Key-Asymmetric:
+ MFgwCgYEVQgBAQICAf8DSgAwRwJAW2sNKK9AVtBzYZmr6aGjlWyK3XmZv3dTINen
+ TWSM7vrzLADbmYQaionwg5sDW3P6oaM5D3tdezXMm7z1T+B+twIDAQAB
+MIC-Info: RSA-MD5,RSA,
+ Q+JoJi5oOqnwRq55v8o3veS33mX1wDowF8rctK+iFwtAIPcfzTLkjPVXmknHwKdy
+ uz60WEUBmDfVwzRfWmSFXA==
+
+<SEC-DOCUMENT>0000891092-10-000570.txt : 20100212
+<SEC-HEADER>0000891092-10-000570.hdr.sgml : 20100212
+<ACCEPTANCE-DATETIME>20100212100548
+ACCESSION NUMBER:		0000891092-10-000570
+CONFORMED SUBMISSION TYPE:	13F-HR
+PUBLIC DOCUMENT COUNT:		1
+CONFORMED PERIOD OF REPORT:	20091231
+FILED AS OF DATE:		20100212
+DATE AS OF CHANGE:		20100212
+EFFECTIVENESS DATE:		20100212
+
+FILER:
+
+	COMPANY DATA:	
+		COMPANY CONFORMED NAME:			CENTRAL SECURITIES CORP
+		CENTRAL INDEX KEY:			0000018748
+		IRS NUMBER:				131875970
+		STATE OF INCORPORATION:			DE
+		FISCAL YEAR END:			1231
+
+	FILING VALUES:
+		FORM TYPE:		13F-HR
+		SEC ACT:		1934 Act
+		SEC FILE NUMBER:	028-06578
+		FILM NUMBER:		10595002
+
+	BUSINESS ADDRESS:	
+		STREET 1:		630 FIFTH AVENUE
+		STREET 2:		SUITE 820
+		CITY:			NEW YORK
+		STATE:			NY
+		ZIP:			10111
+		BUSINESS PHONE:		212-698-2020
+
+	MAIL ADDRESS:	
+		STREET 1:		630 FIFTH AVENUE
+		STREET 2:		SUITE 820
+		CITY:			NEW YORK
+		STATE:			NY
+		ZIP:			10111
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	TRANS CENTRAL SECURITIES CORP
+		DATE OF NAME CHANGE:	19700722
+
+	FORMER COMPANY:	
+		FORMER CONFORMED NAME:	BUERGER LADET & RADINSKY INC
+		DATE OF NAME CHANGE:	19671026
+</SEC-HEADER>
+<DOCUMENT>
+<TYPE>13F-HR
+<SEQUENCE>1
+<FILENAME>e37728_13fhr.txt
+<DESCRIPTION>13F HOLDINGS REPORT
+<TEXT>
+                                 UNITED STATES
+                       SECURITIES AND EXCHANGE COMMISSION
+                             WASHINGTON, D.C. 20549
+
+                                    FORM 13F
+
+                               FORM 13F COVER PAGE
+
+Report for the Calendar Year or Quarter Ended: December 31, 2009
+
+Check here if amendment [ ]; Amendment Number:
+This Amendment (Check only one.): [ ] is a restatement.
+                                  [ ] adds new holdings entries.
+
+Institutional Investment Manager Filing this Report:
+
+Name:     Central Securities Corporation
+Address:  630 Fifth Avenue
+          New York, New York 10111
+
+13F File Number:  28-6578
+
+The institutional investment manager filing this report and the person by whom
+it is signed hereby represent that the person signing the report is authorized
+to submit it, that all information contained herein is true, correct and
+complete, and that it is understood that all required items, statements,
+schedules, lists, and tables, are considered integral parts of this form.
+
+Person Signing this Report on Behalf of Reporting Manager:
+
+Name:    Marlene A. Krumholz
+Title:   Secretary
+Phone:   212-698-2020
+Signature, Place, and Date of Signing:
+
+/s/ Marlene A. Krumholz      New York, New York     February 12, 2010
+
+Report Type (Check only one.):
+
+[X]     13F HOLDINGS REPORT.
+
+[ ]     13F NOTICE.
+
+[ ]     13F COMBINATION REPORT.
+
+List of Other Managers Reporting for this Manager:
+
+None
+
+I AM SIGNING THIS REPORT AS REQUIRED BY THE SECURITIES EXCHANGE ACT OF 1934.
+
+
+<PAGE>
+
+                              FORM 13F SUMMARY PAGE
+
+
+Report Summary:
+
+Number of Other Included Managers:             0
+
+Form 13F Information Table Entry Total:       38
+
+Form 13F Information Table Value Total:  330,369
+
+List of Other Included Managers:
+
+None
+
+
+<PAGE>
+
+                           FORM 13F INFORMATION TABLE
+
+<TABLE>
+<CAPTION>
+                                                          VALUE    SHARES/  SH/  PUT/  INVSMT     OTHER        VOTING AUTHORITY
+    NAME OF ISSUER         TITLE OF CLASS      CUSIP     (x$1000)  PRN AMT  PRN  CALL  DSCRETN   MANAGERS   SOLE    SHARED      NONE
+       COLUMN 1               COLUMN 2        COLUMN 3   COLUMN 4           COLUMN 5   COLUMN 6  COLUMN 7           COLUMN 8
+====================================================================================================================================
+<S>                          <C>            <C>           <C>      <C>        <C>        <C>               <C>        <C>       <C>
+Abbott Laboratories          Common         002824 10 0   6,479    120,000     SH         SOLE             120,000     0         0
+Agilent Technologies, Inc.   Common         00846U 10 1  28,585    920,000     SH         SOLE             920,000     0         0
+Analog Devices, Inc.         Common         032654 10 5  11,685    370,000     SH         SOLE             370,000     0         0
+Arbinet Corporation          Common         03875P 10 0   2,490  1,000,000     SH         SOLE           1,000,000     0         0
+AT&T Inc.                    Common         00206R 10 2   5,606    200,000     SH         SOLE             200,000     0         0
+The Bank of New York
+  Mellon Corporation         Common         064058 10 0  18,880    675,000     SH         SOLE             675,000     0         0
+Brady Corporation            Class A        104674 10 6  22,508    750,000     SH         SOLE             750,000     0         0
+Carlisle Companies Inc.      Common         142339 10 0   6,852    200,000     SH         SOLE             200,000     0         0
+Cenovus Energy Inc.          Common         15135U 10 9   2,520    100,000     SH         SOLE             100,000     0         0
+CEVA, Inc.                   Common         157210 10 5   5,441    423,100     SH         SOLE             423,100     0         0
+Coherent, Inc.               Common         192479 10 3  24,706    831,000     SH         SOLE             831,000     0         0
+Convergys Corporation        Common         212485 10 6  18,275  1,700,000     SH         SOLE           1,700,000     0         0
+Devon Energy Corporation     Common         25179M 10 3  14,700    200,000     SH         SOLE             200,000     0         0
+Dover Corporation            Common         260003 10 8  16,644    400,000     SH         SOLE             400,000     0         0
+EnCana Corporation           Common         292505 10 4   3,239    100,000     SH         SOLE             100,000     0         0
+Erie Indemnity Company       Class A        29530P 10 2     390     10,000     SH         SOLE              10,000     0         0
+Flextronics International
+  Ltd.                       Common         Y2573F 10 2   4,605    630,000     SH         SOLE             630,000     0         0
+General Electric Company     Common         369604 10 3   3,026    200,000     SH         SOLE             200,000     0         0
+GeoMet Inc.                  Common         37250U 20 1   2,920  2,000,000     SH         SOLE           2,000,000     0         0
+Heritage-Crystal Clean Inc.  Common         42726M 10 6   1,046    100,000     SH         SOLE             100,000     0         0
+Home Federal Bancorp, Inc.   Common         43710G 10 5   3,004    225,700     SH         SOLE             225,700     0         0
+Intel Corporation            Common         458140 10 0  16,524    810,000     SH         SOLE             810,000     0         0
+Johnson & Johnson            Common         478160 10 4   6,441    100,000     SH         SOLE             100,000     0         0
+Maxim Integrated Products    Common         57772K 10 1   6,096    300,000     SH         SOLE             300,000     0         0
+McMoRan Exploration
+  Corporation                Common         582411 10 4   5,373    670,000     SH         SOLE             670,000     0         0
+Medtronic, Inc.              Common         585055 10 6   4,398    100,000     SH         SOLE             100,000     0         0
+Motorola, Inc.               Common         620076 10 9   2,716    350,000     SH         SOLE             350,000     0         0
+Murphy Oil Corporation       Common         626717 10 2  16,260    300,000     SH         SOLE             300,000     0         0
+NewStar Financial, Inc.      Common         65261F 10 5     588    150,000     SH         SOLE             150,000     0         0
+Nexen Inc.                   Common         65334H 10 2   4,786    200,000     SH         SOLE             200,000     0         0
+Precision Castparts
+  Corporation                Common         740189 10 5  11,035    100,000     SH         SOLE             100,000     0         0
+RadiSys Corporation          Common         750459 10 9   9,550  1,000,000     SH         SOLE           1,000,000     0         0
+Roper Industries, Inc.       Common         776696 10 6  12,045    230,000     SH         SOLE             230,000     0         0
+Sonus Networks, Inc.         Common         835916 10 7   6,815  3,230,000     SH         SOLE           3,230,000     0         0
+Vical Incorporated           Common         925602 10 4     855    260,000     SH         SOLE             260,000     0         0
+Vodafone Group PLC           Sponsored ADR  92857W 20 9   6,465    280,000     SH         SOLE             280,000     0         0
+Walgreen Co.                 Common         931422 10 9   8,446    230,000     SH         SOLE             230,000     0         0
+Xerox Corporation            Common         984121 10 3   8,375    990,000     SH         SOLE             990,000     0         0
+</TABLE>
+</TEXT>
+</DOCUMENT>
+</SEC-DOCUMENT>
+-----END PRIVACY-ENHANCED MESSAGE-----
